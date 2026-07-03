@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
+import ArSessionResume from "./ArSessionResume";
 
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
+// ponytail: font-family stack (Roboto-preferred + system fallback) via CSS instead of
+// next/font/google — avoids a build/dev-time network fetch of the font (fails offline)
+// and keeps the app working without an external CDN dependency. --font-roboto is in globals.css.
 
 export const metadata: Metadata = {
   title: "Darsi Indoor Navigation",
@@ -19,8 +17,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${roboto.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="id" className="h-full antialiased">
+      <body className="min-h-full flex flex-col">
+        {children}
+        <ArSessionResume />
+      </body>
     </html>
   );
 }

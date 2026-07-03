@@ -13,6 +13,8 @@
   --color-refreshing-ivory: #edf1e0;
   --color-cute-silver: #dfeae6;
   --color-authentic-white: #f8f9fb;
+
+  --font-roboto: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 }
 
 @theme inline {

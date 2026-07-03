@@ -1,30 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "./icons";
+import { launchAR } from "./lib/bridge";
+import {
+  type ApiPoi,
+  type PoiStatus,
+  getPopular,
+  searchPois,
+  categoryIcon,
+  placeLabel,
+} from "./lib/api";
 
 const quickActions = [
   { icon: "pin", title: "Cari Lokasi", sub: "Temukan tujuanmu", href: "/cari-lokasi" },
 ] as const;
 
-const popular = [
-  { emoji: "🏥", name: "IGD", floor: "Lt.1 · 24 jam", bg: "bg-beryl-green" },
-  { emoji: "💊", name: "Farmasi", floor: "Gedung A · Lt.1", bg: "bg-refreshing-ivory" },
-  { emoji: "🩺", name: "Poli Umum", floor: "Gedung B · Lt.2", bg: "bg-cute-silver" },
-  { emoji: "❤️", name: "Poli Jantung", floor: "Gedung B · Lt.3", bg: "bg-beryl-green" },
-];
-
-const services = [
-  { icon: "flask", name: "Laboratorium", floor: "Gedung C · Lt.1", status: "Buka" },
-  { icon: "eye", name: "Poli Mata", floor: "Gedung B · Lt.3", status: "Antre" },
-  { icon: "scan", name: "Radiologi", floor: "Gedung D · Lt.2", status: "Buka" },
-] as const;
-
-const statusStyle: Record<string, string> = {
+const statusStyle: Record<PoiStatus, string> = {
   Buka: "bg-beryl-green text-sensational-green",
   Antre: "bg-refreshing-ivory text-matte-graphite",
   Penuh: "bg-[#FCEBEB] text-[#A32D2D]",
 };
+
+// rotating tints for the horizontal popular cards
+const cardTints = ["bg-beryl-green", "bg-refreshing-ivory", "bg-cute-silver"];
 
 function SectionHeader({
   title,
@@ -55,16 +55,24 @@ function SectionHeader({
 
 export default function Home() {
   const router = useRouter();
+  const [popular, setPopular] = useState<ApiPoi[]>([]);
+  const [services, setServices] = useState<ApiPoi[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // ponytail: bridge to Flutter host; no-op in a plain browser
-  const launchAR = (poiName?: string) => {
-    const w = window as unknown as {
-      DarsiChannel?: { postMessage: (m: string) => void };
-    };
-    w.DarsiChannel?.postMessage(
-      JSON.stringify({ action: "launchAR", poiName: poiName ?? null })
-    );
-  };
+  useEffect(() => {
+    Promise.all([getPopular(), searchPois("", "")])
+      .then(([pop, all]) => {
+        setPopular(pop);
+        setServices(all.filter((p) => !p.is_popular)); // Layanan Lainnya = yang bukan populer
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // poiId = name for now (Unity resolves by exact name until POIData gets a stable id — see ROADMAP T1.4)
+  const navigateTo = (name: string) =>
+    launchAR({ mode: "navigate", poiId: name, poiName: name });
 
   return (
     <div className="relative min-h-full bg-authentic-white pb-20 font-sans">
@@ -83,7 +91,7 @@ export default function Home() {
 
       {/* 2. Aksi cepat */}
       <SectionHeader title="Aksi cepat" />
-      <div className="grid grid-cols-2 gap-2 px-4">
+      <div className="grid grid-cols-1 gap-2 px-4">
         {quickActions.map((a) => (
           <button
             key={a.title}
@@ -101,58 +109,70 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 3. Destinasi Populer */}
-      <SectionHeader
-        title="Destinasi Populer"
-        sub="Paling banyak dicari"
-        onAction={() => router.push("/cari-lokasi")}
-      />
-      <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {popular.map((p) => (
-          <button
-            key={p.name}
-            onClick={() => launchAR(p.name)}
-            className="w-[106px] shrink-0 overflow-hidden rounded-[14px] border-[0.5px] border-cute-silver bg-white text-left"
-          >
-            <div className={`flex h-[58px] items-center justify-center text-3xl ${p.bg}`}>
-              {p.emoji}
-            </div>
-            <div className="px-2.5 py-2">
-              <p className="text-[11px] font-bold text-space-black">{p.name}</p>
-              <p className="text-[9px] text-matte-graphite">{p.floor}</p>
-            </div>
-          </button>
-        ))}
-      </div>
+      {error ? (
+        <div className="px-4 py-10 text-center text-xs text-matte-graphite">
+          Gagal memuat data lokasi. Coba lagi nanti.
+        </div>
+      ) : loading ? (
+        <div className="px-4 py-10 text-center text-xs text-matte-graphite">Memuat lokasi…</div>
+      ) : (
+        <>
+          {/* 3. Destinasi Populer */}
+          <SectionHeader
+            title="Destinasi Populer"
+            sub="Paling banyak dicari"
+            onAction={() => router.push("/cari-lokasi")}
+          />
+          <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {popular.map((p, i) => (
+              <button
+                key={p.name}
+                onClick={() => navigateTo(p.name)}
+                className="w-[106px] shrink-0 overflow-hidden rounded-[14px] border-[0.5px] border-cute-silver bg-white text-left"
+              >
+                <div
+                  className={`flex h-[58px] items-center justify-center text-sensational-green ${cardTints[i % cardTints.length]}`}
+                >
+                  <Icon name={categoryIcon(p.category)} size={24} />
+                </div>
+                <div className="px-2.5 py-2">
+                  <p className="text-[11px] font-bold text-space-black">{p.name}</p>
+                  <p className="text-[9px] text-matte-graphite">{placeLabel(p)}</p>
+                </div>
+              </button>
+            ))}
+          </div>
 
-      {/* 4. Layanan Lainnya */}
-      <SectionHeader title="Layanan Lainnya" onAction={() => router.push("/cari-lokasi")} />
-      <div className="mt-1">
-        {services.map((s) => (
-          <button
-            key={s.name}
-            onClick={() => launchAR(s.name)}
-            className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory px-4 py-[11px] text-left"
-          >
-            <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-beryl-green text-sensational-green">
-              <Icon name={s.icon} size={17} />
-            </span>
-            <span className="flex-1">
-              <span className="block text-xs font-bold text-space-black">{s.name}</span>
-              <span className="block text-[10px] text-matte-graphite">{s.floor}</span>
-            </span>
-            <span
-              className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusStyle[s.status]}`}
-            >
-              {s.status}
-            </span>
-          </button>
-        ))}
-      </div>
+          {/* 4. Layanan Lainnya */}
+          <SectionHeader title="Layanan Lainnya" onAction={() => router.push("/cari-lokasi")} />
+          <div className="mt-1">
+            {services.map((s) => (
+              <button
+                key={s.name}
+                onClick={() => navigateTo(s.name)}
+                className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory px-4 py-[11px] text-left"
+              >
+                <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-beryl-green text-sensational-green">
+                  <Icon name={categoryIcon(s.category)} size={17} />
+                </span>
+                <span className="flex-1">
+                  <span className="block text-xs font-bold text-space-black">{s.name}</span>
+                  <span className="block text-[10px] text-matte-graphite">{placeLabel(s)}</span>
+                </span>
+                <span
+                  className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusStyle[s.status]}`}
+                >
+                  {s.status}
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-      {/* 5. FAB */}
+      {/* 5. FAB — free explore (no destination) */}
       <button
-        onClick={() => launchAR()}
+        onClick={() => launchAR({ mode: "freeExplore" })}
         aria-label="Mulai navigasi AR"
         className="fixed bottom-5 right-4 grid h-[50px] w-[50px] place-items-center rounded-full border-[3px] border-white bg-sensational-green text-white shadow-lg"
       >
