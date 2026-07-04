@@ -17,9 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
-        {children}
+    <html lang="id" className="h-full overflow-hidden antialiased">
+      {/* html/body themselves never scroll — Android's WebView draws its own native
+          fading scrollbar indicator for document-level scroll, which CSS scrollbar-hide
+          rules (globals.css) can't suppress. Scrolling happens in the inner div below
+          instead, where the same CSS rules DO reliably hide it. */}
+      <body className="h-full overflow-hidden">
+        <div className="h-full overflow-y-auto">{children}</div>
         <ArSessionResume />
       </body>
     </html>
