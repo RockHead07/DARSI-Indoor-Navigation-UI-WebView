@@ -20,6 +20,11 @@ export const icons = {
     "M6 3H4v5a4 4 0 008 0V3h-2 M9 15v1a4 4 0 008 0v-3 M17 12a1.6 1.6 0 100 .1z",
   user: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z",
   check: "M20 6L9 17l-5-5",
+  // Presence (file-only, dipakai di badge Cari Teman). Path di bawah cuma fallback
+  // sederhana kalau file-nya hilang.
+  online: "M12 8a4 4 0 100 8 4 4 0 000-8z",
+  ar: "M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z M12 12l8-4.5 M12 12v9 M12 12L4 7.5",
+  offline: "M12 4a8 8 0 100 16 8 8 0 000-16z M6 6l12 12",
 } as const;
 
 export type IconName = keyof typeof icons;
@@ -28,7 +33,23 @@ export type IconName = keyof typeof icons;
 // supaya tetap ikut `currentColor` (bisa hijau/putih/abu sesuai konteks). Tambahkan
 // nama ke sini SETIAP kali sebuah file ikon custom ditaruh; nama yang tidak ada di
 // sini tetap pakai path inline di atas (fallback, tidak pernah patah).
-const FILE_ICONS = new Set<IconName>([]);
+const FILE_ICONS = new Set<IconName>([
+  "search",
+  "pin",
+  "user",
+  "camera",
+  "x",
+  "check",
+  "bell",
+  "clock",
+  "eye",
+  "flask",
+  "activity",
+  "online",
+  "ar",
+  "offline",
+  // "navigation" belum ada file-nya → tetap pakai path inline (fallback).
+]);
 
 export function Icon({
   name,

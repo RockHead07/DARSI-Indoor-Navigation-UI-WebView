@@ -5,7 +5,7 @@
 // Data masih dari mock client (lib/friends.ts) sampai T0.8 (identitas MyRSIy) turun.
 
 import { useEffect, useState } from "react";
-import { Icon } from "../icons";
+import { Icon, type IconName } from "../icons";
 import { launchAR } from "../lib/bridge";
 import {
   type Friend,
@@ -31,7 +31,13 @@ const presenceLabel: Record<Presence, string> = {
 const presenceBadge: Record<Presence, string> = {
   online: "bg-beryl-green text-sensational-green",
   "ar-active": "bg-sensational-green text-white",
-  offline: "bg-refreshing-ivory text-matte-graphite",
+  offline: "bg-[#FCEBEB] text-[#A32D2D]", // merah — status tidak tersedia
+};
+
+const presenceIcon: Record<Presence, IconName> = {
+  online: "online",
+  "ar-active": "ar",
+  offline: "offline",
 };
 
 // warna avatar bergilir, konsisten dengan tint kartu populer di Home
@@ -175,8 +181,9 @@ export default function CariTeman() {
                     <span className="block text-[13px] font-bold text-space-black">{f.name}</span>
                     <span className="block text-[11px] text-matte-graphite">@{f.handle}</span>
                     <span
-                      className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${presenceBadge[f.presence]}`}
+                      className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${presenceBadge[f.presence]}`}
                     >
+                      <Icon name={presenceIcon[f.presence]} size={11} />
                       {presenceLabel[f.presence]}
                     </span>
                   </span>
@@ -289,7 +296,7 @@ export default function CariTeman() {
                   <button
                     aria-label={`Tolak ${r.name}`}
                     onClick={() => onRespond(r.requestId, "reject")}
-                    className="grid h-9 w-9 place-items-center rounded-full border-[0.5px] border-cute-silver bg-white text-matte-graphite transition active:scale-95 active:bg-refreshing-ivory"
+                    className="grid h-9 w-9 place-items-center rounded-full border-[0.5px] border-[#E7B7B7] bg-[#FCEBEB] text-[#A32D2D] transition active:scale-95 active:bg-[#F7DCDC]"
                   >
                     <Icon name="x" size={16} />
                   </button>
