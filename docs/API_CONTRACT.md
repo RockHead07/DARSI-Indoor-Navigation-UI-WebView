@@ -4,8 +4,8 @@
 
 | Endpoint | Method | Fungsi |
 |---|---|---|
-| `/api/poi/popular` | GET | List lokasi populer untuk Home (nama, lantai, gedung, status — TANPA jarak) |
-| `/api/poi/search` | GET | `?q={query}&category={chip}` — hasil pencarian Cari Lokasi |
+| `/api/poi/popular` | GET | List lokasi populer untuk Home (nama, lantai, gedung, status, description, photos — TANPA jarak) |
+| `/api/poi/search` | GET | `?q={query}&category={chip}` — hasil pencarian Cari Lokasi (field sama dengan popular) |
 | `/api/poi/categories` | GET | List kategori untuk filter chip |
 | `/api/friends/request` | POST | Cari Teman — kirim friend-request via identifier persis (username/ID/QR), BUKAN direktori/search terbuka |
 | `/api/friends/respond` | POST | Cari Teman — penerima accept/reject request |
@@ -13,6 +13,8 @@
 | `/api/friends/{id}` | DELETE | Cari Teman — hapus koneksi |
 
 Catatan: response API POI TIDAK PERNAH menyertakan field jarak/distance — itu keputusan produk (ADR-007), bukan keterbatasan API. Jarak dihitung di dalam Unity setelah localize.
+
+Catatan detail POI: `description` (teks) dan `photos` (array URL gambar, boleh kosong → UI render placeholder) adalah konten display-only milik backend (ADR-014), dipakai bottom-sheet detail lokasi. Tap POI di Home/Cari Lokasi membuka sheet detail dulu; `launchAR` baru terpanggil dari CTA "Mulai Navigasi AR" di dalam sheet.
 
 Catatan friendlist (lihat ADR-013): seluruh UI kirim/accept request dan lihat presence ADA DI WEBVIEW (2D), bukan di dalam AR — lihat `FLOWS.md` bagian 5 dan ADR-013 (Google ARCore guideline: hindari full-screen takeover di AR). WebView yang panggil keempat endpoint di atas, Unity hanya terima `connectionId` yang statusnya sudah `accepted`. Presence yang dikembalikan `GET /api/friends` TIDAK PERNAH menyertakan lokasi — hanya status kehadiran. Rate-limit request masuk + kemampuan block ada di endpoint `respond`/`{id}`.
 

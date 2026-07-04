@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "../icons";
-import { launchAR } from "../lib/bridge";
+import PoiDetailSheet from "../PoiDetailSheet";
 import {
   type ApiPoi,
   type PoiStatus,
@@ -21,10 +21,6 @@ const badgeStyle: Record<PoiStatus, string> = {
 };
 
 const MAX_VISIBLE = 6;
-
-// poiId = name for now (Unity resolves by exact name until POIData gets a stable id — see ROADMAP T1.4)
-const startNavigation = (p: ApiPoi) =>
-  launchAR({ mode: "navigate", poiId: p.name, poiName: p.name, floor: p.floor, building: p.building });
 
 export default function CariLokasi() {
   const [query, setQuery] = useState("");
@@ -216,31 +212,10 @@ export default function CariLokasi() {
 
       <div className="flex-1" />
 
-      {/* 5. Selected confirmation card */}
-      {selected && (
-        <div className="mx-4 mt-2.5 flex items-center gap-3 rounded-[14px] border border-beryl-green bg-refreshing-ivory px-4 py-3">
-          <Icon name="pin" size={18} className="text-sensational-green" />
-          <div className="flex-1">
-            <p className="text-xs font-bold text-sensational-green">{selected.name} dipilih</p>
-            <p className="text-[10px] text-matte-graphite">{placeLabel(selected)}</p>
-          </div>
-          <button aria-label="Batal pilih" onClick={() => setSelected(null)}>
-            <Icon name="x" size={15} className="text-[#7F8082]" />
-          </button>
-        </div>
-      )}
-
-      {/* 6. CTA */}
-      <button
-        onClick={() => {
-          const target = selected ?? results[0];
-          if (target) startNavigation(target);
-        }}
-        className="mx-4 mb-5 mt-3 flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-sensational-green text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
-      >
-        <Icon name="camera" size={18} className="text-white" />
-        Mulai navigasi AR
-      </button>
+      {/* 5. Detail sheet — foto + deskripsi + tombol Mulai Navigasi AR.
+          Replaces the old confirmation card + bottom CTA: AR now starts from
+          inside the sheet, not straight from a row tap. */}
+      <PoiDetailSheet poi={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

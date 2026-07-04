@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "./icons";
 import { launchAR } from "./lib/bridge";
+import PoiDetailSheet from "./PoiDetailSheet";
 import {
   type ApiPoi,
   type PoiStatus,
@@ -59,6 +60,7 @@ export default function Home() {
   const [services, setServices] = useState<ApiPoi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [detail, setDetail] = useState<ApiPoi | null>(null); // POI shown in the detail sheet
 
   useEffect(() => {
     Promise.all([getPopular(), searchPois("", "")])
@@ -70,9 +72,8 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  // poiId = name for now (Unity resolves by exact name until POIData gets a stable id — see ROADMAP T1.4)
-  const navigateTo = (name: string) =>
-    launchAR({ mode: "navigate", poiId: name, poiName: name });
+  // Tap on a POI opens the detail sheet (photos + description); AR starts from
+  // the CTA inside the sheet, not from the tap itself.
 
   return (
     <div className="relative min-h-full bg-authentic-white pb-20 font-sans">
@@ -127,7 +128,7 @@ export default function Home() {
             {popular.map((p, i) => (
               <button
                 key={p.name}
-                onClick={() => navigateTo(p.name)}
+                onClick={() => setDetail(p)}
                 className="w-[106px] shrink-0 overflow-hidden rounded-[14px] border-[0.5px] border-cute-silver bg-white text-left"
               >
                 <div
@@ -149,7 +150,7 @@ export default function Home() {
             {services.map((s) => (
               <button
                 key={s.name}
-                onClick={() => navigateTo(s.name)}
+                onClick={() => setDetail(s)}
                 className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory px-4 py-[11px] text-left"
               >
                 <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-beryl-green text-sensational-green">
@@ -169,6 +170,9 @@ export default function Home() {
           </div>
         </>
       )}
+
+      {/* Detail sheet — foto + deskripsi + tombol Mulai Navigasi AR */}
+      <PoiDetailSheet poi={detail} onClose={() => setDetail(null)} />
 
       {/* 5. FAB — free explore (no destination) */}
       <button
