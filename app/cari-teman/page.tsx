@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "../icons";
 import { launchAR } from "../lib/bridge";
+import Modal from "../Modal";
 import {
   type Friend,
   type IncomingRequest,
@@ -16,9 +17,12 @@ import {
   sendRequest,
   respondRequest,
   removeFriend,
+  requestMeet,
   setInvisible,
   getInvisible,
 } from "../lib/friends";
+
+type MeetStage = "confirm" | "waiting" | "accepted" | "rejected";
 
 type Tab = "teman" | "tambah" | "request";
 
@@ -55,6 +59,10 @@ export default function CariTeman() {
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
+  // Minta Navigasi (meet request) — flow popup
+  const [meet, setMeet] = useState<Friend | null>(null);
+  const [meetStage, setMeetStage] = useState<MeetStage>("confirm");
+
   const reload = () => {
     Promise.all([getFriends(), getIncomingRequests()]).then(([f, r]) => {
       setFriends(f);
@@ -90,6 +98,30 @@ export default function CariTeman() {
     const next = !invisible;
     setInvisibleState(next);
     await setInvisible(next);
+  };
+
+  const openMeet = (f: Friend) => {
+    setMeet(f);
+    setMeetStage("confirm");
+  };
+
+  const confirmMeet = async () => {
+    if (!meet) return;
+    const target = meet;
+    setMeetStage("waiting");
+    const res = await requestMeet(target.connectionId);
+    // hanya terapkan kalau masih menunggu untuk teman yang sama (user bisa keburu batal)
+    setMeet((cur) => {
+      if (cur?.connectionId === target.connectionId) setMeetStage(res);
+      return cur;
+    });
+  };
+
+  const enterMeetAr = () => {
+    if (!meet) return;
+    // Simetris: kedua pihak sudah setuju, buka AR untuk saling menemui (ADR-013 refine).
+    launchAR({ mode: "findFriend", connectionId: meet.connectionId });
+    setMeet(null);
   };
 
   return (
@@ -166,7 +198,7 @@ export default function CariTeman() {
             </div>
           ) : (
             friends.map((f, i) => {
-              const canNavigate = f.presence === "ar-active";
+              const canRequest = f.presence !== "offline"; // offline tak bisa dihubungi realtime
               return (
                 <div
                   key={f.connectionId}
@@ -188,20 +220,19 @@ export default function CariTeman() {
                     </span>
                   </span>
                   <span className="flex flex-col items-end gap-1.5">
-                    {/* Navigasi hanya aktif saat teman ar-active (FLOWS.md §5a) */}
+                    {/* Minta Navigasi — consent per-sesi, simetris (refine ADR-013).
+                        Offline tak bisa diminta (tak terjangkau realtime). */}
                     <button
-                      disabled={!canNavigate}
-                      onClick={() =>
-                        launchAR({ mode: "findFriend", connectionId: f.connectionId })
-                      }
+                      disabled={!canRequest}
+                      onClick={() => openMeet(f)}
                       className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition ${
-                        canNavigate
+                        canRequest
                           ? "bg-sensational-green text-white active:scale-[0.97]"
                           : "bg-refreshing-ivory text-brushed-nickel opacity-60"
                       }`}
                     >
                       <Icon name="navigation" size={12} />
-                      Navigasi
+                      Minta Navigasi
                     </button>
                     <button
                       aria-label={`Hapus ${f.name}`}
@@ -306,6 +337,94 @@ export default function CariTeman() {
           )}
         </div>
       )}
+
+      {/* Flow "Minta Navigasi" — request → tunggu → diterima/ditolak → buka AR */}
+      <Modal open={!!meet} onClose={meetStage === "waiting" ? undefined : () => setMeet(null)}>
+        {meet && meetStage === "confirm" && (
+          <>
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-beryl-green text-sensational-green">
+              <Icon name="navigation" size={26} />
+            </div>
+            <h2 className="text-[15px] font-bold text-space-black">
+              Minta navigasi bareng {meet.name}?
+            </h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-matte-graphite">
+              Kalau {meet.name} setuju, kalian berdua akan saling melihat posisi di AR untuk
+              bertemu. Permintaan ini harus disetujui dulu.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setMeet(null)}
+                className="h-[46px] flex-1 rounded-2xl border-[0.5px] border-cute-silver bg-white text-sm font-bold text-matte-graphite transition active:scale-[0.98] active:bg-refreshing-ivory"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmMeet}
+                className="h-[46px] flex-1 rounded-2xl bg-sensational-green text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
+              >
+                Kirim Permintaan
+              </button>
+            </div>
+          </>
+        )}
+
+        {meet && meetStage === "waiting" && (
+          <>
+            <div className="mx-auto mb-3 h-12 w-12 animate-spin rounded-full border-[3px] border-cute-silver border-t-sensational-green" />
+            <h2 className="text-[15px] font-bold text-space-black">
+              Menunggu persetujuan…
+            </h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-matte-graphite">
+              Permintaan navigasi terkirim ke {meet.name}. Menunggu {meet.name} membuka AR dan
+              menyetujui.
+            </p>
+            <button
+              onClick={() => setMeet(null)}
+              className="mt-4 h-[46px] w-full rounded-2xl border-[0.5px] border-cute-silver bg-white text-sm font-bold text-matte-graphite transition active:scale-[0.98] active:bg-refreshing-ivory"
+            >
+              Batalkan
+            </button>
+          </>
+        )}
+
+        {meet && meetStage === "accepted" && (
+          <>
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-sensational-green text-white">
+              <Icon name="check" size={26} />
+            </div>
+            <h2 className="text-[15px] font-bold text-space-black">{meet.name} setuju!</h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-matte-graphite">
+              Kalian siap saling menemui. Buka AR untuk mulai melihat posisi masing-masing.
+            </p>
+            <button
+              onClick={enterMeetAr}
+              className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sensational-green text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
+            >
+              <Icon name="camera" size={18} />
+              Buka AR
+            </button>
+          </>
+        )}
+
+        {meet && meetStage === "rejected" && (
+          <>
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#FCEBEB] text-[#A32D2D]">
+              <Icon name="x" size={26} />
+            </div>
+            <h2 className="text-[15px] font-bold text-space-black">Permintaan ditolak</h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-matte-graphite">
+              {meet.name} belum bisa menerima permintaan navigasimu sekarang.
+            </p>
+            <button
+              onClick={() => setMeet(null)}
+              className="mt-4 h-[46px] w-full rounded-2xl border-[0.5px] border-cute-silver bg-white text-sm font-bold text-matte-graphite transition active:scale-[0.98] active:bg-refreshing-ivory"
+            >
+              Tutup
+            </button>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -100,3 +100,20 @@
 **Fasing implementasi:** untuk sekarang (T3.4) backend di-**seed manual** (gedung/lantai/status diketik langsung di SQL). Model Unity-sumber-kebenaran baru aktif penuh saat Unity Editor sync tool dibangun (ROADMAP T3.4-L2). Jadi ADR ini mengunci *keputusan*-nya sekarang; implementasi field `POIData` + sync menyusul agar tidak memblok WebView.
 
 **Prinsip portability (turunan ADR-001):** WebView → FastAPI → Postgres SQL standar; jangan cantol dalam ke fitur proprietary Supabase (Auth/Realtime/PostgREST langsung) supaya migrasi ke Postgres RS-hosted tetap mulus (`pg_dump`/`pg_restore` + repoint connection string).
+
+---
+
+### ADR-015 — Navigasi ke teman: "request-to-meet" mutual per-sesi (refine trigger ADR-013)
+
+**Keputusan:** Tombol navigasi ke teman TIDAK langsung membuka AR/menampilkan posisi. Diganti flow **"Minta Navigasi" (request-to-meet)** dengan **consent per-sesi yang simetris**:
+1. Peminta tekan "Minta Navigasi" → popup konfirmasi → kirim permintaan.
+2. Teman menerima notifikasi → menyetujui/menolak.
+3. Jika **kedua** setuju → AR terbuka dan **kedua pihak saling melihat posisi** (simetris — bukan follow satu arah) untuk saling menemui.
+
+Tombol aktif untuk teman **online / ar-active**; **offline** dinonaktifkan (tak terjangkau realtime).
+
+**Alasan:** posisi live jauh lebih sensitif daripada status kehadiran. Meski sudah berteman (ADR-013), berbagi posisi real-time layak minta izin **per-sesi** — pola app kredibel (Apple Find My temporary sharing, Life360 request, Snapchat live location dua arah). Ini menutup celah kecil di model lama yang menampilkan posisi teman ar-active tanpa persetujuan sesi. Simetris dipilih agar tidak berkesan "mengikuti diam-diam" (stalking) — dua pihak sama-sama melihat & sama-sama sadar.
+
+**Refine, bukan cabut, ADR-011:** posisi tetap AR-only + auto-terminate saat sesi ditutup. Yang berubah cuma *trigger*: dari "teman ar-active → langsung" jadi "kedua pihak accept per-sesi → buka AR".
+
+**Fasing:** UI/UX flow dibangun sekarang di WebView di atas mock (`lib/friends.ts` `requestMeet`, komponen `Modal`, 4 stage: confirm/waiting/accepted/rejected). Sinyal nyata (push ke HP teman + realtime accept via Photon/websocket + auto-open) **BLOCKED oleh T0.8** (identitas MyRSIy) sama seperti sisa Fase 2. Catatan teknis Android: tidak bisa auto-launch app di kedua HP dari background — yang meng-acc tap→buka AR; peminta dapat prompt "diterima → tap buka AR". `FLOWS.md` §5 & `API_CONTRACT.md` (endpoint `/api/friends/meet` atau sejenis) diupdate saat backend dibangun.

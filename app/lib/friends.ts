@@ -86,6 +86,18 @@ export async function removeFriend(connectionId: string): Promise<void> {
   friends = friends.filter((f) => f.connectionId !== connectionId);
 }
 
+/**
+ * Minta sesi navigasi bareng (meet) ke seorang teman — consent per-sesi, simetris:
+ * kalau diterima, KEDUA pihak saling melihat posisi di AR (refine ADR-013). Promise
+ * resolve saat teman merespons. Backend asli: kirim push ke HP teman lalu tunggu
+ * jawaban via realtime (Photon/websocket) — butuh T0.8. Mock: selalu 'accepted' ~2.5s.
+ */
+export async function requestMeet(connectionId: string): Promise<"accepted" | "rejected"> {
+  void connectionId;
+  await delay(2500);
+  return "accepted";
+}
+
 /** Opt-out presence (ADR-013): tampil offline ke semua orang. */
 export async function setInvisible(v: boolean): Promise<void> {
   await delay(150);
