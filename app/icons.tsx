@@ -18,9 +18,17 @@ export const icons = {
   pill: "M10.5 4.5l-6 6a4.24 4.24 0 106 6l6-6a4.24 4.24 0 10-6-6z M8 7l6 6",
   stethoscope:
     "M6 3H4v5a4 4 0 008 0V3h-2 M9 15v1a4 4 0 008 0v-3 M17 12a1.6 1.6 0 100 .1z",
+  user: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8z",
+  check: "M20 6L9 17l-5-5",
 } as const;
 
 export type IconName = keyof typeof icons;
+
+// Ikon yang punya file custom di public/icons/<name>.svg. Di-render via CSS mask
+// supaya tetap ikut `currentColor` (bisa hijau/putih/abu sesuai konteks). Tambahkan
+// nama ke sini SETIAP kali sebuah file ikon custom ditaruh; nama yang tidak ada di
+// sini tetap pakai path inline di atas (fallback, tidak pernah patah).
+const FILE_ICONS = new Set<IconName>([]);
 
 export function Icon({
   name,
@@ -31,6 +39,31 @@ export function Icon({
   className?: string;
   size?: number;
 }) {
+  if (FILE_ICONS.has(name)) {
+    // Siluet monokrom dari file, diwarnai currentColor lewat mask.
+    return (
+      <span
+        role="img"
+        aria-hidden
+        className={className}
+        style={{
+          display: "inline-block",
+          width: size,
+          height: size,
+          backgroundColor: "currentColor",
+          WebkitMaskImage: `url(/icons/${name}.svg)`,
+          maskImage: `url(/icons/${name}.svg)`,
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
+        }}
+      />
+    );
+  }
+
   return (
     <svg
       width={size}

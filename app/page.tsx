@@ -16,6 +16,7 @@ import {
 
 const quickActions = [
   { icon: "pin", title: "Cari Lokasi", sub: "Temukan tujuanmu", href: "/cari-lokasi" },
+  { icon: "user", title: "Cari Teman", sub: "Temukan temanmu", href: "/cari-teman" },
 ] as const;
 
 const statusStyle: Record<PoiStatus, string> = {
@@ -92,12 +93,12 @@ export default function Home() {
 
       {/* 2. Aksi cepat */}
       <SectionHeader title="Aksi cepat" />
-      <div className="grid grid-cols-1 gap-2 px-4">
+      <div className="grid grid-cols-2 gap-2 px-4">
         {quickActions.map((a) => (
           <button
             key={a.title}
             onClick={() => router.push(a.href)}
-            className="flex items-center gap-3 rounded-[14px] border-[0.5px] border-cute-silver bg-white p-[13px] text-left"
+            className="flex items-center gap-3 rounded-[14px] border-[0.5px] border-cute-silver bg-white p-[13px] text-left transition-colors active:bg-refreshing-ivory"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-beryl-green text-sensational-green">
               <Icon name={a.icon} />
