@@ -72,10 +72,14 @@ export default function CariLokasi() {
 
   return (
     <div className="flex min-h-full flex-col bg-authentic-white font-sans">
-      {/* 1. Search input (focused) */}
+      {/* 1. Search input — highlights green only on focus (focus-within) */}
       <div className="px-4 pb-3 pt-[18px]">
-        <div className="flex h-[50px] items-center gap-2 rounded-[14px] border-[1.5px] border-sensational-green bg-white px-3.5 shadow-[0_0_0_3px_rgba(3,80,48,0.08)]">
-          <Icon name="search" size={17} className="text-sensational-green" />
+        <div className="group flex h-[50px] items-center gap-2 rounded-[14px] border-[1.5px] border-cute-silver bg-white px-3.5 transition-all focus-within:border-sensational-green focus-within:shadow-[0_0_0_3px_rgba(3,80,48,0.08)]">
+          <Icon
+            name="search"
+            size={17}
+            className="text-matte-graphite transition-colors group-focus-within:text-sensational-green"
+          />
           <input
             value={query}
             onChange={(e) => {
@@ -139,7 +143,7 @@ export default function CariLokasi() {
                 <button
                   key={p.name}
                   onClick={() => setSelected(p)}
-                  className={`flex w-full items-center border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3 text-left ${
+                  className={`flex w-full items-center border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3 text-left transition-colors active:bg-refreshing-ivory ${
                     i === 0 ? "border-l-2 border-l-sensational-green" : ""
                   }`}
                 >
@@ -199,7 +203,7 @@ export default function CariLokasi() {
             <button
               key={r}
               onClick={() => setQuery(r)}
-              className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3 text-left"
+              className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3 text-left transition-colors active:bg-refreshing-ivory"
             >
               <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[14px] bg-refreshing-ivory text-matte-graphite">
                 <Icon name="clock" size={18} />
