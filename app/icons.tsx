@@ -5,6 +5,8 @@ export const icons = {
   map: "M9 4l6 2 5-2v14l-5 2-6-2-5 2V6l5-2z M9 4v14 M15 6v14",
   flask: "M9 3h6 M10 3v6l-4 8a2 2 0 001.8 3h8.4a2 2 0 001.8-3l-4-8V3 M7 15h10",
   eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 15a3 3 0 100-6 3 3 0 000 6z",
+  "eye-closed":
+    "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 15a3 3 0 100-6 3 3 0 000 6z M3 3l18 18",
   scan: "M4 7V5a1 1 0 011-1h2 M17 4h2a1 1 0 011 1v2 M20 17v2a1 1 0 01-1 1h-2 M7 20H5a1 1 0 01-1-1v-2 M4 12h16",
   camera:
     "M4 8a2 2 0 012-2h1l1.5-2h7L18 6h1a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V8z M12 16a3.5 3.5 0 100-7 3.5 3.5 0 000 7z",
@@ -25,6 +27,11 @@ export const icons = {
   online: "M12 8a4 4 0 100 8 4 4 0 000-8z",
   ar: "M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z M12 12l8-4.5 M12 12v9 M12 12L4 7.5",
   offline: "M12 4a8 8 0 100 16 8 8 0 000-16z M6 6l12 12",
+  // Cari Teman (file-only). Path di bawah cuma fallback sederhana kalau file hilang.
+  "friend-list": "M16 21v-2a4 4 0 00-3-3.87 M8 21v-2a4 4 0 013-3.87 M9 11a3 3 0 100-6 3 3 0 000 6z M17 11a3 3 0 100-6 3 3 0 000 6z",
+  "add-friend": "M14 20v-1a5 5 0 00-5-5H6a5 5 0 00-5 5v1 M7.5 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7z M19 8v6 M22 11h-6",
+  mail: "M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1z M3.5 7l8.5 6 8.5-6",
+  "mail-alert": "M15 5H4a1 1 0 00-1 1v10a1 1 0 001 1h13a1 1 0 001-1v-5 M3.5 7l8 5.5 M19 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
 } as const;
 
 export type IconName = keyof typeof icons;
@@ -43,11 +50,16 @@ const FILE_ICONS = new Set<IconName>([
   "bell",
   "clock",
   "eye",
+  "eye-closed",
   "flask",
   "activity",
   "online",
   "ar",
   "offline",
+  "friend-list",
+  "add-friend",
+  "mail",
+  "mail-alert",
   // "navigation" belum ada file-nya → tetap pakai path inline (fallback).
 ]);
 

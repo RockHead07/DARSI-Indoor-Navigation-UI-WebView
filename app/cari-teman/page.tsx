@@ -63,6 +63,9 @@ export default function CariTeman() {
   const [meet, setMeet] = useState<Friend | null>(null);
   const [meetStage, setMeetStage] = useState<MeetStage>("confirm");
 
+  // Hapus teman — konfirmasi dulu sebelum eksekusi
+  const [remove, setRemove] = useState<Friend | null>(null);
+
   const reload = () => {
     Promise.all([getFriends(), getIncomingRequests()]).then(([f, r]) => {
       setFriends(f);
@@ -89,8 +92,10 @@ export default function CariTeman() {
     reload();
   };
 
-  const onRemove = async (connectionId: string) => {
-    await removeFriend(connectionId);
+  const onRemove = async () => {
+    if (!remove) return;
+    await removeFriend(remove.connectionId);
+    setRemove(null);
     reload();
   };
 
@@ -166,7 +171,11 @@ export default function CariTeman() {
             onClick={onToggleInvisible}
             className="mx-4 mb-2 flex w-[calc(100%-32px)] items-center gap-3 rounded-[14px] border-[0.5px] border-cute-silver bg-white px-4 py-3 text-left transition-colors active:bg-refreshing-ivory"
           >
-            <Icon name="eye" size={17} className="text-matte-graphite" />
+            <Icon
+              name={invisible ? "eye" : "eye-closed"}
+              size={17}
+              className={invisible ? "text-sensational-green" : "text-matte-graphite"}
+            />
             <span className="flex-1">
               <span className="block text-xs font-bold text-space-black">Tampil offline</span>
               <span className="block text-[10px] text-matte-graphite">
@@ -189,7 +198,7 @@ export default function CariTeman() {
           {friends.length === 0 ? (
             <div className="flex flex-col items-center px-8 pt-14 text-center">
               <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-beryl-green">
-                <Icon name="user" size={36} className="text-sensational-green" />
+                <Icon name="friend-list" size={36} className="text-sensational-green" />
               </div>
               <h2 className="text-sm font-bold text-space-black">Belum ada teman</h2>
               <p className="mt-1 text-xs text-matte-graphite">
@@ -236,7 +245,7 @@ export default function CariTeman() {
                     </button>
                     <button
                       aria-label={`Hapus ${f.name}`}
-                      onClick={() => onRemove(f.connectionId)}
+                      onClick={() => setRemove(f)}
                       className="text-[10px] text-brushed-nickel underline active:text-space-black"
                     >
                       Hapus
@@ -287,7 +296,7 @@ export default function CariTeman() {
             disabled={sending || !identifier.trim()}
             className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-sensational-green text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24] disabled:opacity-50"
           >
-            <Icon name="user" size={18} className="text-white" />
+            <Icon name="add-friend" size={18} className="text-white" />
             {sending ? "Mengirim…" : "Kirim Permintaan"}
           </button>
         </div>
@@ -296,7 +305,7 @@ export default function CariTeman() {
           {requests.length === 0 ? (
             <div className="flex flex-col items-center px-8 pt-14 text-center">
               <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-refreshing-ivory">
-                <Icon name="bell" size={36} className="text-matte-graphite" />
+                <Icon name="mail" size={36} className="text-matte-graphite" />
               </div>
               <h2 className="text-sm font-bold text-space-black">Tidak ada request masuk</h2>
               <p className="mt-1 text-xs text-matte-graphite">
@@ -304,11 +313,16 @@ export default function CariTeman() {
               </p>
             </div>
           ) : (
-            requests.map((r) => (
-              <div
-                key={r.requestId}
-                className="flex items-center border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3"
-              >
+            <>
+              <div className="flex items-center gap-2 px-4 pb-2 pt-1 text-[11px] font-bold text-sensational-green">
+                <Icon name="mail-alert" size={15} />
+                {requests.length} permintaan menunggu persetujuanmu
+              </div>
+              {requests.map((r) => (
+                <div
+                  key={r.requestId}
+                  className="flex items-center border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3"
+                >
                 <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-refreshing-ivory text-sm font-bold text-sensational-green">
                   {r.name.charAt(0)}
                 </span>
@@ -332,8 +346,9 @@ export default function CariTeman() {
                     <Icon name="x" size={16} />
                   </button>
                 </span>
-              </div>
-            ))
+                </div>
+              ))}
+            </>
           )}
         </div>
       )}
@@ -422,6 +437,37 @@ export default function CariTeman() {
             >
               Tutup
             </button>
+          </>
+        )}
+      </Modal>
+
+      {/* Konfirmasi hapus teman */}
+      <Modal open={!!remove} onClose={() => setRemove(null)}>
+        {remove && (
+          <>
+            <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-[#FCEBEB] text-[#A32D2D]">
+              <Icon name="user" size={26} />
+            </div>
+            <h2 className="text-[15px] font-bold text-space-black">Hapus dari pertemanan?</h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-matte-graphite">
+              Apakah kamu yakin ingin menghapus <span className="font-bold">{remove.name}</span> dari
+              daftar temanmu? Kalian tidak akan bisa saling melihat status atau minta navigasi lagi
+              sampai berteman ulang.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setRemove(null)}
+                className="h-[46px] flex-1 rounded-2xl border-[0.5px] border-cute-silver bg-white text-sm font-bold text-matte-graphite transition active:scale-[0.98] active:bg-refreshing-ivory"
+              >
+                Batal
+              </button>
+              <button
+                onClick={onRemove}
+                className="h-[46px] flex-1 rounded-2xl bg-[#A32D2D] text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#8a2525]"
+              >
+                Hapus
+              </button>
+            </div>
           </>
         )}
       </Modal>
