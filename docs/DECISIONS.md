@@ -130,3 +130,18 @@ Tombol aktif untuk teman **online / ar-active**; **offline** dinonaktifkan (tak 
 **Alasan:** string bebas yang muncul di banyak tempat pasti drift (typo, beda kapital, beda istilah) — dan gejalanya diam-diam (ikon jadi `pin` default), baru ketahuan lama kemudian. Chokepoint natural-nya adalah endpoint sync: SEMUA data kategori lewat situ, jadi validasi di sana menangkap typo **saat klik Sync di Unity**, bukan di UI berminggu-minggu kemudian. Tabel `categories` + API sendiri sengaja **tidak** dibuat — over-engineering untuk skala ~20 POI satu dev; konstanta di backend sudah cukup jadi SSOT.
 
 **Konsekuensi operasional:** menambah/rename kategori = edit **dua tempat** (`POI_CATEGORIES` backend + `categoryIcon()` WebView) + taruh file ikon di subfolder segmen yang benar (`public/icons/<segmen>/`). Daftar kategori final RS masih perlu divalidasi ke IT/manajemen RSI (mereka punya struktur unit resmi). Turunan ADR-014: `category` adalah field milik Unity (diketik di `POIData.kategori`), jadi pencegahan di hulu (dropdown/enum di Unity, bukan string bebas) menyusul saat daftar kategori RSI fix.
+
+---
+
+### ADR-017 — Gating login MyRSIy + identitas via injeksi host + DARSI mint handle sendiri
+
+**Keputusan:** Identitas user untuk Fase 2 (friendlist) diperlakukan sebagai **seam** yang bisa dibangun sekarang tanpa menunggu MyRSIy, dengan tiga keputusan:
+1. **Gating ikut status login MyRSIy:** **Navigasi lokasi = boleh tamu** (tak butuh identitas). **Cari Teman = login-only** (butuh identitas, ADR-013). Memetakan langsung ke split guest/login MyRSIy.
+2. **Identitas via injeksi host→WebView, bukan lewat `launchAR`:** host (MyRSIy via Flutter) set `window.__DARSI_USER__ = { userId, handle? }` (atau `null` = tamu) SEBELUM WebView mount — arah & mekanisme sama seperti `window.onARSessionClosed`. WebView baca lewat `getCurrentUser()` (`app/lib/user.ts`) sebagai SATU sumber kebenaran. Yang WAJIB dari MyRSIy cuma **`userId` stabil + tidak didaur ulang** (UUID/PK).
+3. **DARSI mint handle sendiri:** `handle` opsional dari MyRSIy — kalau tak ada, DARSI generate saat user pertama pakai Cari Teman (disimpan di `profiles` DARSI, di-key `userId`). MyRSIy **tidak perlu expose PII**.
+
+**Alasan:** T0.8 (identitas MyRSIy) tadinya dianggap blocker keras seluruh Fase 2. Dengan seam ini ia turun jadi **langkah wiring terakhir**: di copycat kita sendiri yang pegang launch, jadi `userId` bisa disuntik nilai dev/palsu sekarang → backend friend graph, endpoint, presence, render AR semua bisa dibangun & didemoin tanpa MyRSIy. Ini best-practice untuk fitur yang keblok dependency eksternal (bangun adapter/seam + kontrak, jangan gantung). "Hapus akun MyRSIy" (2FA + alasan + permanen) TIDAK bikin `userId` tak stabil — stabil = tak berubah selama akun hidup; yang dilarang cuma *reuse* ID ke user lain (UUID/auto-increment aman by default). DARSI-mint-handle menghindari kebocoran PII (nama asli/RM/NIK) ke user lain + bikin `handle` tak jadi blocker.
+
+**Refine, bukan cabut, ADR-013:** friend-request add-by-exact-identifier tetap; identifier-nya = handle buatan DARSI. Posisi tetap AR-only (ADR-011/015).
+
+**Fasing:** seam (`getCurrentUser`, guest-gate Cari Teman, kontrak `window.__DARSI_USER__` di `API_CONTRACT.md`/`INTEGRATION.md`) dibangun sekarang. Backend friend graph (T2.1+) menyusul di atas identitas suntikan. Pertanyaan ke MyRSIy menyempit jadi satu (bisa oper `userId` stabil saat launch?) — bisa dijawab async oleh dev MyRSIy, tak harus Pak Farris.

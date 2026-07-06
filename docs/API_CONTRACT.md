@@ -51,8 +51,31 @@ window.onARSessionClosed = function(payload) {
 };
 ```
 
+### Flutter → WebView (identitas user saat load) — seam integrasi MyRSIy (ADR-017)
+
+Fitur **Cari Teman = login-only** (navigasi lokasi tetap boleh tamu). Identitas **tidak**
+ikut `launchAR`; ia disuntik host saat WebView di-load — arah host→WebView, sama seperti
+`onARSessionClosed`. Host (MyRSIy via Flutter) **wajib set `window.__DARSI_USER__` SEBELUM
+app mount:**
+
+```js
+// user login:
+window.__DARSI_USER__ = { userId: "uuid-stabil", handle: "opsional" };
+// atau tamu (eksplisit):
+window.__DARSI_USER__ = null;
+```
+
+- **`userId`** — satu-satunya field yang WAJIB dari MyRSIy: **stabil + TIDAK didaur ulang**
+  (UUID atau PK auto-increment). Ini kunci friend graph. Hapus-akun MyRSIy = koneksi
+  di-drop; yang dilarang cuma *reuse* ID ke user lain.
+- **`handle`** — OPSIONAL. Kalau MyRSIy tak kasih, DARSI mint handle sendiri saat user
+  pertama pakai Cari Teman (disimpan di tabel `profiles` DARSI, di-key `userId`). Jadi
+  MyRSIy **tidak perlu expose PII** (nama asli/RM/NIK) — cukup `userId`.
+- WebView baca via `getCurrentUser()` (`app/lib/user.ts`, SATU sumber kebenaran). Tanpa
+  host: dev = fake login (testable), produksi = tamu. `__DARSI_USER__` absen ⇒ tamu.
+
 ## Implementasi teknis WebView
 
 - Bridge sudah dikunci: `webview_flutter` (`^4.10.0`) via `JavaScriptChannel` bernama `DarsiBridge`, bukan `postMessage` browser standar murni dan bukan `flutter_inappwebview` (lihat ADR-012).
 - Nama channel `DarsiBridge` adalah kesepakatan kerja tim ini — kalau implementasi Flutter final di `My-eRSIy-CopyCat` pakai nama beda, update di sini dan di `INTEGRATION.md` sekaligus.
-- Identitas user (untuk friendlist, `ADR-013`) masih **`⚠️ NEEDS DECISION`** — menunggu konfirmasi Pak Farris soal user ID + handle stabil dari MyRSIy (lihat `docs/ROADMAP.md` T0.8 di repo Unity). Endpoint `/api/friends/*` tidak bisa diimplementasikan sampai ini clear.
+- Identitas user (friendlist, ADR-013/017): **seam sudah dibangun** (`app/lib/user.ts` + kontrak `window.__DARSI_USER__` di atas), jadi Fase 2 bisa dibangun & dites di atas identitas suntikan (dev/copycat) TANPA nunggu MyRSIy. Yang tersisa cuma **final wiring**: MyRSIy asli mengisi `userId` saat launch. Pertanyaan ke MyRSIy sudah menyempit jadi 1: *"bisa oper `userId` stabil (UUID/PK, tak didaur ulang) saat launch modul DARSI?"* (lihat `docs/ROADMAP.md` T0.8). `handle` tidak lagi diperlukan dari MyRSIy (DARSI mint sendiri — ADR-017).

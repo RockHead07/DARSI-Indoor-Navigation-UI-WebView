@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "../icons";
 import { launchAR } from "../lib/bridge";
+import { type CurrentUser, getCurrentUser } from "../lib/user";
 import Modal from "../Modal";
 import {
   type Friend,
@@ -48,6 +49,8 @@ const presenceIcon: Record<Presence, IconName> = {
 const avatarTints = ["bg-beryl-green", "bg-refreshing-ivory", "bg-cute-silver"];
 
 export default function CariTeman() {
+  // undefined = belum dicek (hindari hydration mismatch); null = tamu; obj = login.
+  const [user, setUser] = useState<CurrentUser | null | undefined>(undefined);
   const [tab, setTab] = useState<Tab>("teman");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<IncomingRequest[]>([]);
@@ -73,6 +76,9 @@ export default function CariTeman() {
       setLoading(false);
     });
   };
+
+  // Cek identitas sesudah mount (client-only) — gating login-only (ADR-017).
+  useEffect(() => setUser(getCurrentUser()), []);
 
   // legit fetch-in-effect: initial load dari mock client
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,6 +134,27 @@ export default function CariTeman() {
     launchAR({ mode: "findFriend", connectionId: meet.connectionId });
     setMeet(null);
   };
+
+  // Belum dicek → jangan render apa-apa dulu (cegah kedip guest→login).
+  if (user === undefined) {
+    return <div className="min-h-full bg-authentic-white" />;
+  }
+
+  // Tamu (belum login MyRSIy): Cari Teman fitur login-only (ADR-017). Navigasi tetap terbuka.
+  if (user === null) {
+    return (
+      <div className="flex min-h-full flex-col items-center justify-center bg-authentic-white px-8 text-center font-sans">
+        <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-beryl-green">
+          <Icon name="friend-list" size={36} className="text-sensational-green" />
+        </div>
+        <h2 className="text-sm font-bold text-space-black">Masuk untuk pakai Cari Teman</h2>
+        <p className="mt-1.5 max-w-[280px] text-xs leading-relaxed text-matte-graphite">
+          Fitur menemukan & menavigasi ke teman butuh akun MyRSIy. Masuk dulu lewat aplikasi
+          MyRSIy, lalu buka kembali Navigasi Indoor. Navigasi ke lokasi tetap bisa tanpa masuk.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-full flex-col bg-authentic-white font-sans">
