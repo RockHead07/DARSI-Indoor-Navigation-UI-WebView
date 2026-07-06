@@ -117,3 +117,16 @@ Tombol aktif untuk teman **online / ar-active**; **offline** dinonaktifkan (tak 
 **Refine, bukan cabut, ADR-011:** posisi tetap AR-only + auto-terminate saat sesi ditutup. Yang berubah cuma *trigger*: dari "teman ar-active → langsung" jadi "kedua pihak accept per-sesi → buka AR".
 
 **Fasing:** UI/UX flow dibangun sekarang di WebView di atas mock (`lib/friends.ts` `requestMeet`, komponen `Modal`, 4 stage: confirm/waiting/accepted/rejected). Sinyal nyata (push ke HP teman + realtime accept via Photon/websocket + auto-open) **BLOCKED oleh T0.8** (identitas MyRSIy) sama seperti sisa Fase 2. Catatan teknis Android: tidak bisa auto-launch app di kedua HP dari background — yang meng-acc tap→buka AR; peminta dapat prompt "diterima → tap buka AR". `FLOWS.md` §5 & `API_CONTRACT.md` (endpoint `/api/friends/meet` atau sejenis) diupdate saat backend dibangun.
+
+---
+
+### ADR-016 — Kategori POI kanonik = satu sumber kebenaran, divalidasi di boundary sync
+
+**Keputusan:** Daftar kategori POI adalah **himpunan tertutup (closed set) kanonik**, bukan string bebas. Ikon POI di WebView diturunkan dari **`category`** (bukan `id`/`unity_id`) lewat `categoryIcon()` → `/icons/<segmen>/<nama>.svg`. Agar tidak drift antara tiga tempat yang menyentuh kategori (Unity `POIData.kategori` → backend → WebView), diberlakukan:
+1. **SSOT di backend:** konstanta `POI_CATEGORIES` (`app/main.py`) memuat daftar kategori kanonik.
+2. **Validasi fail-loud di boundary:** `POST /api/poi/sync` **menolak seluruh sync (HTTP 422)** kalau ada POI dengan kategori di luar `POI_CATEGORIES`, menyebut kategori mana yang salah + daftar valid. All-or-nothing (DB tidak setengah ter-upsert).
+3. **Mirror di WebView:** key `categoryIcon()` (`app/lib/api.ts`) HARUS sama persis (case-sensitive) dengan `POI_CATEGORIES`. Kategori tak dikenal di WebView jatuh ke `pin` (jaring pengaman tampilan, bukan pengganti validasi).
+
+**Alasan:** string bebas yang muncul di banyak tempat pasti drift (typo, beda kapital, beda istilah) — dan gejalanya diam-diam (ikon jadi `pin` default), baru ketahuan lama kemudian. Chokepoint natural-nya adalah endpoint sync: SEMUA data kategori lewat situ, jadi validasi di sana menangkap typo **saat klik Sync di Unity**, bukan di UI berminggu-minggu kemudian. Tabel `categories` + API sendiri sengaja **tidak** dibuat — over-engineering untuk skala ~20 POI satu dev; konstanta di backend sudah cukup jadi SSOT.
+
+**Konsekuensi operasional:** menambah/rename kategori = edit **dua tempat** (`POI_CATEGORIES` backend + `categoryIcon()` WebView) + taruh file ikon di subfolder segmen yang benar (`public/icons/<segmen>/`). Daftar kategori final RS masih perlu divalidasi ke IT/manajemen RSI (mereka punya struktur unit resmi). Turunan ADR-014: `category` adalah field milik Unity (diketik di `POIData.kategori`), jadi pencegahan di hulu (dropdown/enum di Unity, bukan string bebas) menyusul saat daftar kategori RSI fix.

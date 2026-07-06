@@ -36,17 +36,44 @@ export const searchPois = (q: string, category: string) =>
 export const getCategories = () => get<string[]>("/api/poi/categories");
 
 // The API carries no icon — derive one from category so the UI stays glyphed.
+// Kategori kanonik rumah sakit (RSI). Daftar final divalidasi ke IT RSI; kategori
+// tak dikenal jatuh ke "pin" (aman, tidak pernah patah). File glyph: public/icons/.
+const CATEGORY_ICON: Record<string, IconName> = {
+  // Klinis / instalasi medis
+  IGD: "cross",
+  Poliklinik: "stethoscope",
+  Farmasi: "mortar",
+  Laboratorium: "flask",
+  Radiologi: "xray",
+  "Rawat Inap": "bed",
+  "Kamar Operasi": "scalpel",
+  ICU: "heart",
+  "Ruang Bersalin": "baby",
+  Fisioterapi: "activity",
+  // Administrasi / layanan
+  Pendaftaran: "clipboard",
+  Kasir: "wallet",
+  Informasi: "info",
+  BPJS: "card",
+  "Rekam Medis": "folder",
+  // Fasilitas umum
+  Musholla: "mosque",
+  Toilet: "restroom",
+  Kantin: "utensils",
+  ATM: "atm",
+  Parkir: "parking",
+  "Ruang Tunggu": "waiting",
+  // Sirkulasi / wayfinding
+  Lift: "elevator",
+  Tangga: "stairs",
+  "Pintu Masuk": "door",
+  // Kategori demo kampus (lama) — tetap didukung
+  Administrasi: "activity",
+  Umum: "pin",
+};
+
 export function categoryIcon(category: string): IconName {
-  switch (category) {
-    case "Laboratorium":
-      return "flask";
-    case "Administrasi":
-      return "activity";
-    case "Umum":
-      return "pin";
-    default:
-      return "pin";
-  }
+  return CATEGORY_ICON[category] ?? "pin";
 }
 
 // building + floor as one display line, tolerating nulls (ADR-014: owned by Unity, may be unset)
