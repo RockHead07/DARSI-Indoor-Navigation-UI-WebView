@@ -42,7 +42,7 @@ export function launchAR(args: LaunchArgs): void {
 
 // Flutter → WebView: called when the AR session ends (docs/API_CONTRACT.md).
 // Payload matches the Unity arSessionClosed event (docs/INTEGRATION.md).
-export type ArSessionClosed = { arrived: boolean; poiId: string | null };
+export type ArSessionClosed = { arrived: boolean; poiId: string | null; poiName?: string | null };
 
 type WindowWithArHandler = { onARSessionClosed?: (p: ArSessionClosed) => void };
 

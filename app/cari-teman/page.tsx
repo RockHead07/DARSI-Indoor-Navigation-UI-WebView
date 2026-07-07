@@ -147,11 +147,19 @@ export default function CariTeman() {
         <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-beryl-green">
           <Icon name="friend-list" size={36} className="text-sensational-green" />
         </div>
-        <h2 className="text-sm font-bold text-space-black">Masuk untuk pakai Cari Teman</h2>
+        <h2 className="text-sm font-bold text-space-black">Silahkan Masuk ke Akun Anda untuk Cari Teman</h2>
         <p className="mt-1.5 max-w-[280px] text-xs leading-relaxed text-matte-graphite">
           Fitur menemukan & menavigasi ke teman butuh akun MyRSIy. Masuk dulu lewat aplikasi
           MyRSIy, lalu buka kembali Navigasi Indoor. Navigasi ke lokasi tetap bisa tanpa masuk.
         </p>
+        {/* ponytail: bypass sementara — Fase 2 masih di atas mock (lib/friends.ts),
+            belum ada auth MyRSIy asli. Hapus tombol ini saat identitas real turun (ADR-017). */}
+        <button
+          onClick={() => setUser({ userId: "demo-user", handle: "kamu" })}
+          className="mt-5 h-[46px] rounded-2xl bg-sensational-green px-6 text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
+        >
+          Coba dulu sebagai demo
+        </button>
       </div>
     );
   }

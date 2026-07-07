@@ -8,6 +8,7 @@ import type { IconName } from "../icons";
 export type PoiStatus = "Buka" | "Antre" | "Penuh";
 
 export type ApiPoi = {
+  id: string | null; // stable Unity GUID (unity_id); null for legacy rows → UI falls back to name
   name: string;
   category: string;
   building: string | null;

@@ -17,9 +17,10 @@ const badgeStyle: Record<PoiStatus, string> = {
   Penuh: "bg-[#FCEBEB] text-[#A32D2D]",
 };
 
-// poiId = name for now (Unity resolves by exact name until POIData gets a stable id — see ROADMAP T1.4)
+// poiId = stable Unity GUID so navigation survives a POI rename; poiName is the display
+// label + Unity's fuzzy-match fallback when a legacy POI has no synced GUID (id null).
 const startNavigation = (p: ApiPoi) =>
-  launchAR({ mode: "navigate", poiId: p.name, poiName: p.name, floor: p.floor, building: p.building });
+  launchAR({ mode: "navigate", poiId: p.id ?? p.name, poiName: p.name, floor: p.floor, building: p.building });
 
 export default function PoiDetailSheet({
   poi,

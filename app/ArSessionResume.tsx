@@ -11,7 +11,8 @@ export default function ArSessionResume() {
 
   useEffect(() => {
     return onArSessionClosed((p: ArSessionClosed) => {
-      setMsg(p.arrived && p.poiId ? `Kamu telah tiba di ${p.poiId}.` : "Sesi AR selesai.");
+      const dest = p.poiName ?? p.poiId; // poiId is a GUID now — prefer the human-readable name
+      setMsg(p.arrived && dest ? `Kamu telah tiba di ${dest}.` : "Sesi AR selesai.");
     });
   }, []);
 
