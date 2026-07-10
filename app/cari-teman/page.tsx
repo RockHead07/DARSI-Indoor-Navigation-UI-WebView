@@ -55,7 +55,7 @@ export default function CariTeman() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<IncomingRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [invisible, setInvisibleState] = useState(getInvisible());
+  const [invisible, setInvisibleState] = useState(false);
 
   // Tambah Teman
   const [identifier, setIdentifier] = useState("");
@@ -79,6 +79,11 @@ export default function CariTeman() {
 
   // Cek identitas sesudah mount (client-only) — gating login-only (ADR-017).
   useEffect(() => setUser(getCurrentUser()), []);
+
+  // Load status "tampil offline" tersimpan (real endpoint, lihat lib/friends.ts).
+  useEffect(() => {
+    getInvisible().then(setInvisibleState);
+  }, []);
 
   // legit fetch-in-effect: initial load dari mock client
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,7 +113,11 @@ export default function CariTeman() {
   const onToggleInvisible = async () => {
     const next = !invisible;
     setInvisibleState(next);
-    await setInvisible(next);
+    try {
+      await setInvisible(next);
+    } catch {
+      setInvisibleState(!next); // gagal simpan ke backend → balikin toggle
+    }
   };
 
   const openMeet = (f: Friend) => {
@@ -229,6 +238,15 @@ export default function CariTeman() {
               />
             </span>
           </button>
+          {/* Feedback visual — kartu teman di bawah TIDAK PERNAH berubah (mock data +
+              toggle ini cuma memengaruhi apa yang user LAIN lihat tentang kita, bukan
+              tampilan sendiri). Tanpa baris ini, klik toggle terkesan "tidak ngapa-ngapain". */}
+          <p className="mx-4 mb-3 text-[10px] text-matte-graphite">
+            Status kamu saat ini:{" "}
+            <span className={invisible ? "font-bold text-sensational-green" : "font-bold text-space-black"}>
+              {invisible ? "Offline (tersembunyi dari teman)" : "Terlihat oleh teman"}
+            </span>
+          </p>
 
           {friends.length === 0 ? (
             <div className="flex flex-col items-center px-8 pt-14 text-center">

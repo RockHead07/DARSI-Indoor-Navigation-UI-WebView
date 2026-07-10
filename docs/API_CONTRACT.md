@@ -11,6 +11,10 @@
 | `/api/friends/respond` | POST | Cari Teman — penerima accept/reject request |
 | `/api/friends` | GET | Cari Teman — list koneksi `accepted` + presence status-only (`online`/`ar-active`/`offline`, TANPA gedung/lantai/posisi) |
 | `/api/friends/{id}` | DELETE | Cari Teman — hapus koneksi |
+| `/api/presence/{userId}` | GET | Baca status opt-out "tampil offline" (`{ invisible: bool }`) |
+| `/api/presence/{userId}` | PUT | Set status opt-out "tampil offline" (body `{ invisible: bool }`) |
+
+Catatan presence: `/api/presence/{userId}` sudah endpoint real (tabel `presence`, `darsi-backend/schema.sql`), TERPISAH dari friend graph di atas yang masih mock (menunggu T0.8). `userId` dari `window.__DARSI_USER__` (ADR-017), dipercaya apa adanya di URL — belum ada lapisan auth (ponytail, lihat komentar di `app/main.py`); tambahkan verifikasi token kalau MyRSIy sudah menerbitkan token yang bisa divalidasi.
 
 Catatan: response API POI TIDAK PERNAH menyertakan field jarak/distance — itu keputusan produk (ADR-007), bukan keterbatasan API. Jarak dihitung di dalam Unity setelah localize.
 

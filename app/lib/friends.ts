@@ -9,7 +9,12 @@
 // Guardrail ADR-013 yang relevan di sisi client:
 // - add-by-exact-identifier — TIDAK ADA pencarian/browse direktori user
 // - presence status-only (online / ar-active / offline) — tidak pernah lokasi
-// - opt-out "tampil offline" tersedia
+// - opt-out "tampil offline" tersedia — SUDAH real (GET/PUT /api/presence/{userId}),
+//   friend graph di bawah masih mock; lihat setInvisible/getInvisible di bawah.
+
+import { getCurrentUser } from "./user";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export type Presence = "online" | "ar-active" | "offline";
 
@@ -36,8 +41,6 @@ let friends: Friend[] = [
 let incoming: IncomingRequest[] = [
   { requestId: "r-1", name: "Salsabila Zahra", handle: "salsa.bila" },
 ];
-
-let invisible = false;
 
 const delay = (ms = 350) => new Promise((r) => setTimeout(r, ms)); // simulasi latency network
 
@@ -98,12 +101,24 @@ export async function requestMeet(connectionId: string): Promise<"accepted" | "r
   return "accepted";
 }
 
-/** Opt-out presence (ADR-013): tampil offline ke semua orang. */
+/** Opt-out presence (ADR-013): tampil offline ke semua orang. Real endpoint (bukan mock)
+ *  — GET/PUT /api/presence/{userId}, lihat `presence` table di darsi-backend/schema.sql. */
 export async function setInvisible(v: boolean): Promise<void> {
-  await delay(150);
-  invisible = v;
+  const user = getCurrentUser();
+  if (!user) return; // tamu: gak ada identitas buat disimpan
+  const res = await fetch(`${API_BASE}/api/presence/${encodeURIComponent(user.userId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ invisible: v }),
+  });
+  if (!res.ok) throw new Error(`presence PUT → ${res.status}`);
 }
 
-export function getInvisible(): boolean {
-  return invisible;
+export async function getInvisible(): Promise<boolean> {
+  const user = getCurrentUser();
+  if (!user) return false;
+  const res = await fetch(`${API_BASE}/api/presence/${encodeURIComponent(user.userId)}`);
+  if (!res.ok) return false;
+  const data: { invisible: boolean } = await res.json();
+  return data.invisible;
 }
