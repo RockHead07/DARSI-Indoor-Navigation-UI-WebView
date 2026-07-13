@@ -19,7 +19,7 @@ export type ApiPoi = {
   photos: string[]; // image URLs; empty = UI renders placeholder tiles
 };
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);

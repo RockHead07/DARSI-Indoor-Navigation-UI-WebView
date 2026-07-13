@@ -12,9 +12,8 @@
 // - opt-out "tampil offline" tersedia — SUDAH real (GET/PUT /api/presence/{userId}),
 //   friend graph di bawah masih mock; lihat setInvisible/getInvisible di bawah.
 
+import { BASE } from "./api";
 import { getCurrentUser } from "./user";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export type Presence = "online" | "ar-active" | "offline";
 
@@ -106,7 +105,7 @@ export async function requestMeet(connectionId: string): Promise<"accepted" | "r
 export async function setInvisible(v: boolean): Promise<void> {
   const user = getCurrentUser();
   if (!user) return; // tamu: gak ada identitas buat disimpan
-  const res = await fetch(`${API_BASE}/api/presence/${encodeURIComponent(user.userId)}`, {
+  const res = await fetch(`${BASE}/api/presence/${encodeURIComponent(user.userId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ invisible: v }),
@@ -117,7 +116,7 @@ export async function setInvisible(v: boolean): Promise<void> {
 export async function getInvisible(): Promise<boolean> {
   const user = getCurrentUser();
   if (!user) return false;
-  const res = await fetch(`${API_BASE}/api/presence/${encodeURIComponent(user.userId)}`);
+  const res = await fetch(`${BASE}/api/presence/${encodeURIComponent(user.userId)}`);
   if (!res.ok) return false;
   const data: { invisible: boolean } = await res.json();
   return data.invisible;
