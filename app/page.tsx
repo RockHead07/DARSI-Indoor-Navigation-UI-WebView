@@ -119,38 +119,39 @@ export default function Home() {
         <div className="px-4 py-10 text-center text-xs text-matte-graphite">Memuat lokasi…</div>
       ) : (
         <>
-          {/* 3. Destinasi Populer */}
-          <SectionHeader
-            title="Destinasi Populer"
-            sub="Paling banyak dicari"
-            onAction={() => router.push("/cari-lokasi")}
-          />
-          <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {popular.map((p, i) => (
-              <button
-                key={p.name}
-                onClick={() => setDetail(p)}
-                className="w-[106px] shrink-0 overflow-hidden rounded-[14px] border-[0.5px] border-cute-silver bg-white text-left"
-              >
-                <div
-                  className={`flex h-[58px] items-center justify-center text-sensational-green ${cardTints[i % cardTints.length]}`}
-                >
-                  <Icon name={categoryIcon(p.category)} size={24} />
-                </div>
-                <div className="px-2.5 py-2">
-                  <p className="text-[11px] font-bold text-space-black">{p.name}</p>
-                  <p className="text-[9px] text-matte-graphite">{placeLabel(p)}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          {/* 3. Layanan Utama */}
+          {popular.length > 0 && (
+            <>
+              <SectionHeader title="Layanan Utama" />
+              <div className="grid grid-cols-4 gap-2 px-4">
+                {popular.slice(0, 4).map((p, i) => (
+                  <button
+                    key={p.id ?? p.name}
+                    onClick={() => setDetail(p)}
+                    className="overflow-hidden rounded-[14px] border-[0.5px] border-cute-silver bg-white text-center"
+                  >
+                    <div
+                      className={`flex h-[52px] items-center justify-center text-sensational-green ${cardTints[i % cardTints.length]}`}
+                    >
+                      <Icon name={categoryIcon(p.category)} size={22} />
+                    </div>
+                    <div className="px-1 py-1.5">
+                      <p className="line-clamp-2 text-[10px] font-bold leading-tight text-space-black">
+                        {p.name}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* 4. Layanan Lainnya */}
           <SectionHeader title="Layanan Lainnya" onAction={() => router.push("/cari-lokasi")} />
           <div className="mt-1">
             {services.map((s) => (
               <button
-                key={s.name}
+                key={s.id ?? s.name}
                 onClick={() => setDetail(s)}
                 className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory px-4 py-[11px] text-left"
               >
