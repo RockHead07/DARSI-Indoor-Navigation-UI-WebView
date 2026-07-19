@@ -12,8 +12,6 @@ import {
   placeLabel,
 } from "../lib/api";
 
-const recent = ["Perpustakaan", "BAAK", "Lab Mikrotik"];
-
 const badgeStyle: Record<PoiStatus, string> = {
   Buka: "bg-beryl-green text-sensational-green",
   Antre: "bg-refreshing-ivory text-matte-graphite",
@@ -41,11 +39,15 @@ export default function CariLokasi() {
   }, []);
 
   const q = query.trim();
-  const showResults = q !== "" || category !== "Semua";
+  // Tanpa query dan tanpa filter = mode JELAJAH: tampilkan seluruh POI.
+  // Dulu keadaan ini justru menyembunyikan daftar dan merender "Pencarian terakhir"
+  // yang isinya hardcoded, sehingga chip "Semua" secara struktural tak pernah bisa
+  // menampilkan apa pun. Backend memang sudah mengembalikan semua untuk q & kategori
+  // kosong — yang salah cuma gerbang di sini.
+  const browsing = q === "" && category === "Semua";
 
-  // fetch results whenever the query or category changes (only when there's something to show)
+  // fetch results whenever the query or category changes
   useEffect(() => {
-    if (!showResults) return; // stale results aren't rendered in the default (recent) view
     let cancelled = false;
     // legit fetch-in-effect: flag loading synchronously so the spinner shows immediately
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -65,9 +67,15 @@ export default function CariLokasi() {
     return () => {
       cancelled = true;
     };
-  }, [q, category, showResults]);
+  }, [q, category]);
 
-  const visible = showAll ? results : results.slice(0, MAX_VISIBLE);
+  // Di mode jelajah, POI prioritas (is_popular) naik ke atas — IGD/Pendaftaran/Farmasi
+  // lebih sering dibutuhkan daripada urutan alfabet. Saat mencari atau memfilter, urutan
+  // backend dipertahankan supaya hasil tidak "melompat" di luar dugaan user.
+  const ordered = browsing
+    ? [...results].sort((a, b) => Number(b.is_popular) - Number(a.is_popular))
+    : results;
+  const visible = showAll ? ordered : ordered.slice(0, MAX_VISIBLE);
   const onChip = (c: string) => setCategory((prev) => (prev === c ? "Semua" : c));
 
   return (
@@ -121,19 +129,20 @@ export default function CariLokasi() {
         })}
       </div>
 
-      {showResults ? (
-        loading ? (
+      {loading ? (
           <div className="px-4 py-10 text-center text-xs text-matte-graphite">Memuat…</div>
         ) : error ? (
           <div className="px-4 py-10 text-center text-xs text-matte-graphite">
             Gagal memuat data. Coba lagi nanti.
           </div>
-        ) : results.length > 0 ? (
+      ) : results.length > 0 ? (
           <>
             {/* 3. Result count */}
             <div className="flex items-center justify-between px-4 pb-1.5 pt-2">
               <span className="text-[11px] text-brushed-nickel">
-                {results.length} lokasi ditemukan
+                {browsing
+                  ? `${results.length} lokasi tersedia`
+                  : `${results.length} lokasi ditemukan`}
               </span>
             </div>
 
@@ -141,7 +150,10 @@ export default function CariLokasi() {
             <div>
               {visible.map((p, i) => (
                 <button
-                  key={p.name}
+                  // `name` sudah TIDAK unik sejak ADR-021 (dua POI "Lift", satu per lantai),
+                  // jadi id stabil dari Unity yang dipakai; nama cuma cadangan untuk baris
+                  // lama yang belum punya unity_id.
+                  key={p.id ?? p.name}
                   onClick={() => setSelected(p)}
                   className={`flex w-full items-center border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3 text-left transition-colors active:bg-refreshing-ivory ${
                     i === 0 ? "border-l-2 border-l-sensational-green" : ""
@@ -164,7 +176,7 @@ export default function CariLokasi() {
                   </span>
                 </button>
               ))}
-              {results.length > MAX_VISIBLE && !showAll && (
+              {ordered.length > MAX_VISIBLE && !showAll && (
                 <button
                   onClick={() => setShowAll(true)}
                   className="w-full py-3 text-center text-[12px] font-bold text-sensational-green"
@@ -194,24 +206,6 @@ export default function CariLokasi() {
               Lihat semua lokasi
             </button>
           </div>
-        )
-      ) : (
-        /* Default state: recent searches */
-        <div className="pt-2">
-          <span className="block px-4 pb-1 text-[11px] text-brushed-nickel">Pencarian terakhir</span>
-          {recent.map((r) => (
-            <button
-              key={r}
-              onClick={() => setQuery(r)}
-              className="flex w-full items-center gap-3 border-b-[0.5px] border-refreshing-ivory bg-white px-4 py-3 text-left transition-colors active:bg-refreshing-ivory"
-            >
-              <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[14px] bg-refreshing-ivory text-matte-graphite">
-                <Icon name="clock" size={18} />
-              </span>
-              <span className="text-[13px] font-bold text-space-black">{r}</span>
-            </button>
-          ))}
-        </div>
       )}
 
       <div className="flex-1" />
