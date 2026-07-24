@@ -9,10 +9,10 @@
 // Guardrail ADR-013 yang relevan di sisi client:
 // - add-by-exact-identifier — TIDAK ADA pencarian/browse direktori user
 // - presence status-only (online / ar-active / offline) — tidak pernah lokasi
-// - opt-out "tampil offline" tersedia — SUDAH real (GET/PUT /api/presence/{userId}),
-//   friend graph di bawah masih mock; lihat setInvisible/getInvisible di bawah.
+// - opt-out "tampil offline" tersedia — SUDAH real (Supabase tabel `presence` via
+//   PostgREST); friend graph di bawah masih mock; lihat setInvisible/getInvisible di bawah.
 
-import { BASE } from "./api";
+import { rest } from "./api";
 import { getCurrentUser } from "./user";
 
 export type Presence = "online" | "ar-active" | "offline";
@@ -100,24 +100,32 @@ export async function requestMeet(connectionId: string): Promise<"accepted" | "r
   return "accepted";
 }
 
-/** Opt-out presence (ADR-013): tampil offline ke semua orang. Real endpoint (bukan mock)
- *  — GET/PUT /api/presence/{userId}, lihat `presence` table di darsi-backend/schema.sql. */
+/** Opt-out presence (ADR-013): tampil offline ke semua orang. Real (bukan mock) — kini
+ *  Supabase: upsert/baca tabel `presence` via PostgREST (darsi-backend/supabase/setup.sql).
+ *  user_id masih client-trusted (ADR-017); perketat saat MyRSIy terbitkan token. */
 export async function setInvisible(v: boolean): Promise<void> {
   const user = getCurrentUser();
   if (!user) return; // tamu: gak ada identitas buat disimpan
-  const res = await fetch(`${BASE}/api/presence/${encodeURIComponent(user.userId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ invisible: v }),
+  // Upsert pada PK user_id. return=minimal → 204, rest() balas undefined (tak parse body).
+  await rest("presence", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify({ user_id: user.userId, invisible: v }),
   });
-  if (!res.ok) throw new Error(`presence PUT → ${res.status}`);
 }
 
 export async function getInvisible(): Promise<boolean> {
   const user = getCurrentUser();
   if (!user) return false;
-  const res = await fetch(`${BASE}/api/presence/${encodeURIComponent(user.userId)}`);
-  if (!res.ok) return false;
-  const data: { invisible: boolean } = await res.json();
-  return data.invisible;
+  try {
+    const rows = await rest<{ invisible: boolean }[]>(
+      `presence?user_id=eq.${encodeURIComponent(user.userId)}&select=invisible`,
+    );
+    return rows[0]?.invisible ?? false;
+  } catch {
+    return false; // no-row / network / guest → non-blocking
+  }
 }

@@ -1,7 +1,8 @@
-// POI API client (T3.4.4/T3.4.5). Talks to the DARSI FastAPI backend.
-// Base URL is configurable so the same code hits local dev, staging, or prod:
-//   NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000  (default, local FastAPI)
-// Response shape is the locked contract (docs/API_CONTRACT.md) — never a distance field (ADR-007).
+// POI data client. Migrasi dari FastAPI (Railway) ke Supabase PostgREST + RLS + RPC
+// (darsi-backend/supabase/setup.sql). anon key AMAN di bundle karena RLS.
+//   NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
+//   NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon public key>
+// Bentuk respons = kontrak terkunci ApiPoi (docs/API_CONTRACT.md) — tak pernah ada field distance (ADR-007).
 
 import type { IconName } from "../icons";
 
@@ -19,22 +20,40 @@ export type ApiPoi = {
   photos: string[]; // image URLs; empty = UI renders placeholder tiles
 };
 
-export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`);
-  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
-  return res.json() as Promise<T>;
+// Semua request PostgREST butuh apikey + Bearer (anon). Diekspor — friends.ts pakai untuk
+// presence. 204 (upsert return=minimal) → tak ada body untuk di-JSON-kan.
+export async function rest<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${SUPA}/rest/v1/${path}`, {
+    ...init,
+    headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, ...(init?.headers ?? {}) },
+  });
+  if (!res.ok) throw new Error(`Supabase ${path} → ${res.status}`);
+  return res.status === 204 ? (undefined as T) : (res.json() as Promise<T>);
 }
 
-export const getPopular = () => get<ApiPoi[]>("/api/poi/popular");
+// unity_id di-alias ke `id` → bentuk = ApiPoi, komponen WebView tak berubah.
+const POI_SELECT =
+  "id:unity_id,name,category,building,floor,status,is_popular,description,photos";
 
+export const getPopular = () =>
+  rest<ApiPoi[]>(`pois?is_popular=eq.true&select=${POI_SELECT}&order=name`);
+
+// Substring ILIKE pada elemen array `synonyms` tak bisa PostgREST murni → RPC search_pois.
 export const searchPois = (q: string, category: string) =>
-  get<ApiPoi[]>(
-    `/api/poi/search?q=${encodeURIComponent(q)}&category=${encodeURIComponent(category)}`,
-  );
+  rest<ApiPoi[]>("rpc/search_pois", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ q, category }),
+  });
 
-export const getCategories = () => get<string[]>("/api/poi/categories");
+// PostgREST tak punya DISTINCT → ambil kolom category lalu dedupe di klien (list kecil).
+export const getCategories = async (): Promise<string[]> => {
+  const rows = await rest<{ category: string }[]>("pois?select=category&order=category");
+  return [...new Set(rows.map((r) => r.category))];
+};
 
 // The API carries no icon — derive one from category so the UI stays glyphed.
 // Kategori kanonik rumah sakit (RSI). Daftar final divalidasi ke IT RSI; kategori
