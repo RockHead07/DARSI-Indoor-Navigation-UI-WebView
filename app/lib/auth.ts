@@ -39,19 +39,23 @@ export async function login(identifier: string, password: string): Promise<AuthR
  * identity supaya gating login ikut aktif.
  */
 export async function register(input: {
+  username: string;
   name: string;
+  phone: string;
   email: string;
   password: string;
   confirm: string;
 }): Promise<AuthResult> {
   await delay(900);
-  const { name, email, password, confirm } = input;
+  const { username, name, phone, email, password, confirm } = input;
+  if (!username.trim()) return { ok: false, message: "Nickname/username tidak boleh kosong." };
   if (!name.trim()) return { ok: false, message: "Nama lengkap tidak boleh kosong." };
+  if (phone.replace(/\D/g, "").length < 9) return { ok: false, message: "Nomor telepon tidak valid." };
   if (!/^\S+@\S+\.\S+$/.test(email.trim())) return { ok: false, message: "Format email tidak valid." };
   if (password.length < 6) return { ok: false, message: "Password minimal 6 karakter." };
   if (password !== confirm) return { ok: false, message: "Konfirmasi password tidak cocok." };
 
-  persistDemoUser(email.trim().toLowerCase());
+  persistDemoUser(username.trim().toLowerCase());
   return { ok: true, message: "Akun berhasil dibuat." };
 }
 

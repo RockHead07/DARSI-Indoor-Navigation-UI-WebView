@@ -9,11 +9,20 @@ import { AuthShell, Field, PasswordField, PrimaryButton, FormError, PasswordStre
 import { Icon } from "../../icons";
 import { register } from "../../lib/auth";
 
-type Errors = { name?: string; email?: string; password?: string; confirm?: string };
+type Errors = {
+  username?: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  password?: string;
+  confirm?: string;
+};
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -24,7 +33,9 @@ export default function RegisterPage() {
 
   const onSubmit = async () => {
     const next: Errors = {};
+    if (!username.trim()) next.username = "Masukkan nickname/username.";
     if (!name.trim()) next.name = "Masukkan nama lengkap.";
+    if (phone.replace(/\D/g, "").length < 9) next.phone = "Masukkan nomor telepon yang valid.";
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) next.email = "Masukkan email yang valid.";
     if (password.length < 6) next.password = "Minimal 6 karakter.";
     if (confirm !== password) next.confirm = "Konfirmasi harus sama dengan password.";
@@ -33,7 +44,7 @@ export default function RegisterPage() {
     if (Object.keys(next).length > 0) return;
 
     setSubmitting(true);
-    const res = await register({ name, email, password, confirm });
+    const res = await register({ username, name, phone, email, password, confirm });
     setSubmitting(false);
 
     if (res.ok) {
@@ -80,14 +91,31 @@ export default function RegisterPage() {
           <div className="rounded-[calc(2rem-0.375rem)] bg-white px-5 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
             <div className="space-y-2">
               <Field
-                label="Nama lengkap"
+                label="Nickname/username"
                 icon="user"
+                value={username}
+                onChange={(v) => setUsername(v)}
+                placeholder="Nickname/username"
+                autoCapitalize="none"
+                autoComplete="username"
+                error={errors.username}
+              />
+              <Field
+                label="Nama lengkap"
                 value={name}
                 onChange={(v) => setName(v)}
                 placeholder="Nama lengkap"
                 autoCapitalize="words"
                 autoComplete="name"
                 error={errors.name}
+              />
+              <Field
+                label="Nomor telepon"
+                value={phone}
+                onChange={(v) => setPhone(v)}
+                placeholder="08xxxxxxxxxx"
+                autoComplete="tel"
+                error={errors.phone}
               />
               <Field
                 label="Email"
