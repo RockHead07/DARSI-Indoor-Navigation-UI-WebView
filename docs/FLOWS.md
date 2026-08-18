@@ -123,3 +123,43 @@ User selesai (arrived / tap back di AR)
 | AR Navigation (Unity) | ✅ Ada | Active, Reroute, Arrived states |
 | Cari Teman (Unity, render posisi teman) | ✅ Ada (baru) | AR-only, friendlist di WebView, lihat flow #5 & ADR-013 |
 | Voice Input (Unity uGUI) | ✅ Ada (existing) | Tidak berubah |
+| Profil (`/profile`, WebView) | ✅ Ada (baru) | Di-load `ProfileScreen` Flutter (`PROFILE_AUTH_URL`). Tamu → langsung form login. Lihat flow #7 & ADR-018 |
+| Login / Register / Lupa password (`/auth/*`, WebView) | ✅ Ada — **UI mock** | Bukan sistem akun sungguhan; akun tetap milik MyRSIy (ADR-017/018) |
+
+---
+
+## 7. Profil & Auth Flow (WebView ⇄ host Flutter)
+
+> Semua layar di bawah ini **mock UI di atas seam ADR-017** — belum ada backend auth,
+> belum ada tabel akun di Supabase. Lihat ADR-018 untuk alasan & kapan dicabut.
+
+```
+Flutter HomeScreen (tab "Profil")
+  → ProfileScreen memuat WebView ke PROFILE_AUTH_URL (default: /profile)
+
+/profile:
+  - tamu   → router.replace("/auth/login")   (TANPA layar perantara)
+  - login  → ringkasan profil + tombol Keluar
+
+/auth/login  ──"Belum punya akun?"──→  /auth/register
+     │                                       │
+     │ sukses                                │ sukses (username & email belum dipakai)
+     ▼                                       ▼
+window.__DARSI_USER__ di-set (seam ADR-017, gating Cari Teman menyala)
+     +
+window.ProfileBridge.postMessage({ event: "LOGIN_SUCCESS" | "REGISTER_SUCCESS",
+                                   user: { fullName, email } })
+     ▼
+Flutter AuthCubit.login() → HomeHeader berganti dari "Tamu" ke nama lengkap
+```
+
+**Keluar:** tombol di `/profile` → `logout()` → `window.__DARSI_USER__ = null` +
+`ProfileBridge.postMessage({ event: "LOGOUT" })` → `AuthCubit.logout()` → header
+kembali "Tamu". Di WebView, user langsung dilempar ke form login lagi.
+
+**Register ditolak** kalau username **atau** email sudah dipakai — pesannya sengaja
+mengarahkan ke "Lupa password?", bukan sekadar bilang gagal. Sumber cek = daftar
+in-memory (reset tiap reload), **bukan** query database (ADR-018).
+
+**Kontrak `ProfileBridge` dimiliki sisi Flutter**, bukan repo ini:
+`My-eRSIy-CopyCat-/docs/AUTH_INTEGRATION.md`. Kalau berubah, perbarui di sana dulu.

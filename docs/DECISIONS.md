@@ -145,3 +145,28 @@ Tombol aktif untuk teman **online / ar-active**; **offline** dinonaktifkan (tak 
 **Refine, bukan cabut, ADR-013:** friend-request add-by-exact-identifier tetap; identifier-nya = handle buatan DARSI. Posisi tetap AR-only (ADR-011/015).
 
 **Fasing:** seam (`getCurrentUser`, guest-gate Cari Teman, kontrak `window.__DARSI_USER__` di `API_CONTRACT.md`/`INTEGRATION.md`) dibangun sekarang. Backend friend graph (T2.1+) menyusul di atas identitas suntikan. Pertanyaan ke MyRSIy menyempit jadi satu (bisa oper `userId` stabil saat launch?) — bisa dijawab async oleh dev MyRSIy, tak harus Pak Farris.
+
+---
+
+### ADR-018 — Layar auth = UI mock di atas seam ADR-017; identitas dijembatani ke host Flutter; TIDAK ada tabel auth di Supabase (2026-08-19)
+
+**Konteks:** Halaman `/auth/login`, `/auth/register`, `/auth/forgot-password` ditambahkan (commit `56376ab` dst). Muncul pertanyaan wajar: apakah perlu dibuatkan tabel Supabase untuk menyimpannya?
+
+**Keputusan:** **Tidak.** Layar-layar itu **UI mock / preview**, bukan sistem akun sungguhan. `app/lib/auth.ts` tidak pernah menyentuh Supabase — tidak ada `pois`-style tabel `users`/`accounts`, dan **tidak ada password yang disimpan di mana pun**.
+
+**Alasan:**
+1. **Kepemilikan identitas tidak berubah** (ADR-017): akun milik MyRSIy, DARSI cuma menerima `userId` lewat injeksi `window.__DARSI_USER__`. Membuat tabel akun sendiri = DARSI mulai menyimpan password — tanggung jawab keamanan besar (hashing, risiko breach) untuk app yang menempel ke rumah sakit, dan justru hal yang sudah sengaja dihindari.
+2. **Pemicu tabel `profiles` yang benar sudah ditentukan di ADR-017**: handle di-mint saat user **pertama kali memakai Cari Teman**, bukan saat register. Itu bagian Fase 2 (T2.1+) yang menunggu identitas asli MyRSIy turun.
+3. Membuat tabel sekarang dari bentuk form mock ini kemungkinan besar meleset dari kebutuhan nyata — form ini punya email/phone/password yang semuanya milik MyRSIy, bukan DARSI. Infrastruktur tanpa pemakai.
+
+**Verifikasi (bukan asumsi):** schema Supabase live dicek lewat MCP — hanya ada `pois`, `poi_categories`, `presence`. Tabel `profiles` yang direncanakan ADR-017 pun **belum ada**, konsisten dengan Fase 2 yang belum digarap.
+
+**Jembatan ke host Flutter (`ProfileBridge`):** kontraknya **sudah lebih dulu ada di sisi Flutter** — `ProfileScreen` + `AuthCubit` + `HomeHeader` di repo `My-eRSIy-CopyCat-`, terdokumentasi di `docs/AUTH_INTEGRATION.md` sana. Yang belum ada cuma sisi WebView-nya. Sekarang `login()`/`register()`/`logout()` mem-posting `{ event, user: { fullName, email } }` ke `window.ProfileBridge` sesuai kontrak itu, sehingga HomeHeader Flutter berganti dari "Tamu" ke nama lengkap **tanpa satu baris pun perubahan di kode Flutter**. Kalau bridge tidak ada (dibuka di browser biasa), fungsinya diam saja — tidak error.
+
+**Rute `/profile`:** dibuat karena itulah yang di-load `ProfileScreen` secara default (`PROFILE_AUTH_URL`). Tamu **langsung diarahkan ke form login** (tanpa layar perantara "kamu belum masuk"); jalur daftar ditawarkan lewat tautan "Belum punya akun?" di halaman login itu sendiri. Sudah login → ringkasan profil + tombol Keluar yang mem-posting `LOGOUT`.
+
+**Cek duplikat saat register:** username/email yang sudah dipakai ditolak dengan pesan yang mengarahkan ke "Lupa password?". Sumbernya **in-memory `Set`** (seed dari user demo tetap + siapa pun yang register di sesi yang sama), reset tiap reload — **bukan** query ke database. Ini disengaja: cukup untuk memperagakan alurnya, tanpa membangun backend akun yang keputusannya justru "jangan dibangun" di atas.
+
+**User demo tetap:** `rockhead07` → "Bagus Insan Pradana" (+ email) di-hardcode di `lib/auth.ts` supaya demo ke pembimbing menunjukkan nama sungguhan alih-alih "Tamu"/handle generik. **Password tidak ikut disimpan** — mock login memang tidak pernah memeriksa password (asal ≥6 karakter), jadi menyimpannya tidak diperlukan sekaligus menghindari kredensial masuk repo publik.
+
+**Kapan ADR ini dicabut:** saat backend auth MyRSIy sungguhan tersedia. Isi tiap fungsi di `lib/auth.ts` diganti `fetch` beneran; **bentuk fungsinya sengaja tidak berubah** supaya UI tidak perlu dirombak. Hapus juga `HARDCODED_DEMO_USERS`, `Set` duplikat in-memory, dan tombol "Coba dulu sebagai demo" di Cari Teman.
