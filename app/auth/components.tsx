@@ -100,24 +100,9 @@ export function AuthShell({
         <div className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-beryl-green/40 blur-3xl" />
       </div>
 
-      {/* Brand lockup */}
-      <Reveal>
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-sensational-green text-white shadow-[0_14px_30px_-12px_rgba(3,80,48,0.55)]">
-            <Icon name="navigation" size={20} />
-          </span>
-          <span className="leading-none">
-            <span className="block text-[15px] font-black tracking-tight text-space-black">DARSI</span>
-            <span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.18em] text-matte-graphite">
-              Navigasi Indoor
-            </span>
-          </span>
-        </div>
-      </Reveal>
-
       {/* Heading */}
       <Reveal delay={70}>
-        <div className="mt-10">
+        <div className="mt-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-cute-silver bg-white/80 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-sensational-green backdrop-blur-sm">
             <span className="h-1 w-1 rounded-full bg-lime-peel" />
             {eyebrow}
