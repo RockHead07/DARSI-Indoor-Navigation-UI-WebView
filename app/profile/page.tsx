@@ -16,34 +16,16 @@ export default function ProfilePage() {
 
   useEffect(() => setUser(getCurrentUser()), []);
 
-  if (user === undefined) {
-    return <div className="min-h-full bg-authentic-white" />;
-  }
+  // Tamu -> langsung ke form login, tanpa layar perantara "kamu belum masuk".
+  // Jalur daftar tetap terbuka lewat "Belum punya akun? Daftar sekarang" di
+  // halaman login itu sendiri. `replace` (bukan `push`) supaya tombol back
+  // tidak memantul balik ke /profile yang akan mengarahkan ulang ke sini.
+  useEffect(() => {
+    if (user === null) router.replace("/auth/login");
+  }, [user, router]);
 
-  if (user === null) {
-    return (
-      <div className="flex min-h-full flex-col items-center justify-center bg-authentic-white px-8 text-center font-sans">
-        <div className="mb-4 grid h-20 w-20 place-items-center rounded-full bg-beryl-green">
-          <Icon name="user" size={36} className="text-sensational-green" />
-        </div>
-        <h2 className="text-sm font-bold text-space-black">Kamu belum masuk</h2>
-        <p className="mt-1.5 max-w-[280px] text-xs leading-relaxed text-matte-graphite">
-          Masuk atau buat akun untuk melihat dan mengelola profilmu.
-        </p>
-        <button
-          onClick={() => router.push("/auth/login")}
-          className="mt-5 h-[46px] w-full max-w-[280px] rounded-2xl bg-sensational-green px-6 text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
-        >
-          Masuk
-        </button>
-        <button
-          onClick={() => router.push("/auth/register")}
-          className="mt-3 h-[46px] w-full max-w-[280px] rounded-2xl border-[0.5px] border-cute-silver bg-white text-sm font-bold text-matte-graphite transition active:scale-[0.98] active:bg-refreshing-ivory"
-        >
-          Daftar
-        </button>
-      </div>
-    );
+  if (user === undefined || user === null) {
+    return <div className="min-h-full bg-authentic-white" />;
   }
 
   return (
