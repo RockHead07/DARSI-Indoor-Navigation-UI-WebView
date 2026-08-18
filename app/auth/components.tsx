@@ -76,23 +76,21 @@ export function Reveal({
 }
 
 /**
- * Page shell: fixed ambient green orbs (GPU-static, never animating), brand lockup,
- * eyebrow pill, oversized heading + subtitle. Content flows below inside a
+ * Page shell: fixed ambient green orbs (GPU-static, never animating), centered
+ * heading + subtitle, minim whitespace. Content flows below inside a
  * double-bezel card owned by each screen.
  */
 export function AuthShell({
-  eyebrow,
   title,
   subtitle,
   children,
 }: {
-  eyebrow: string;
   title: string;
   subtitle: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-[100dvh] flex-col bg-authentic-white px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-12 font-sans text-space-black">
+    <div className="relative flex min-h-[100dvh] flex-col bg-authentic-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 font-sans text-space-black">
       {/* Ambient glow — fixed background layer, pointer-events-none, static (no animation). */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-beryl-green/60 blur-3xl" />
@@ -100,28 +98,24 @@ export function AuthShell({
         <div className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-beryl-green/40 blur-3xl" />
       </div>
 
-      {/* Heading */}
-      <Reveal delay={70}>
-        <div className="mt-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-cute-silver bg-white/80 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-sensational-green backdrop-blur-sm">
-            <span className="h-1 w-1 rounded-full bg-lime-peel" />
-            {eyebrow}
-          </span>
-          <h1 className="mt-3 text-[26px] font-black leading-[1.15] tracking-tight text-space-black">
+      {/* Heading — centered */}
+      <Reveal>
+        <div className="text-center">
+          <h1 className="text-[26px] font-black leading-[1.15] tracking-tight text-space-black">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-2 max-w-[300px] text-[13px] leading-relaxed text-matte-graphite">
+            <p className="mx-auto mt-1.5 max-w-[300px] text-[13px] leading-relaxed text-matte-graphite">
               {subtitle}
             </p>
           )}
         </div>
       </Reveal>
 
-      <div className="mt-10 flex-1">{children}</div>
+      <div className="mt-6 flex-1">{children}</div>
 
-      <Reveal delay={160}>
-        <p className="mt-8 text-center text-[10px] leading-relaxed text-brushed-nickel">
+      <Reveal delay={120}>
+        <p className="mt-4 text-center text-[10px] leading-relaxed text-brushed-nickel">
           Dengan melanjutkan, kamu menyetujui Ketentuan Layanan &amp; Kebijakan Privasi DARSI.
         </p>
       </Reveal>
@@ -233,7 +227,7 @@ export function PasswordField({
           type="button"
           aria-label={show ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
           onClick={() => setShow((s) => !s)}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-matte-graphite transition-all duration-300 active:scale-90"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-matte-graphite transition-all duration-300 active:scale-90"
         >
           <Icon name={show ? "eye-closed" : "eye"} size={17} />
         </button>

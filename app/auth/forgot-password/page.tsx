@@ -39,7 +39,6 @@ export default function ForgotPasswordPage() {
   if (success) {
     return (
       <AuthShell
-        eyebrow="Email terkirim"
         title="Cek email kamu"
         subtitle=""
       >
@@ -66,7 +65,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      eyebrow="Pemulihan akun"
       title="Lupa password?"
       subtitle=""
     >

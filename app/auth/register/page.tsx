@@ -57,7 +57,6 @@ export default function RegisterPage() {
   if (success) {
     return (
       <AuthShell
-        eyebrow="Akun berhasil dibuat"
         title="Selamat bergabung!"
         subtitle=""
       >
@@ -82,7 +81,6 @@ export default function RegisterPage() {
 
   return (
     <AuthShell
-      eyebrow="Buat akun baru"
       title="Daftar DARSI"
       subtitle=""
     >

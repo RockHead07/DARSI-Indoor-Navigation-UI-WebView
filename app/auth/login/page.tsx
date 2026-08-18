@@ -42,7 +42,6 @@ export default function LoginPage() {
   if (success) {
     return (
       <AuthShell
-        eyebrow="Selamat datang kembali"
         title="Berhasil masuk"
         subtitle=""
       >
@@ -67,7 +66,6 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      eyebrow="Silakan masuk"
       title="Masuk ke akunmu"
       subtitle=""
     >
