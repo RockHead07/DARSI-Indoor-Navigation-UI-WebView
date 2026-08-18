@@ -5,6 +5,7 @@
 // Data masih dari mock client (lib/friends.ts) sampai T0.8 (identitas MyRSIy) turun.
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icon, type IconName } from "../icons";
 import { launchAR } from "../lib/bridge";
 import { type CurrentUser, getCurrentUser } from "../lib/user";
@@ -49,6 +50,7 @@ const presenceIcon: Record<Presence, IconName> = {
 const avatarTints = ["bg-beryl-green", "bg-refreshing-ivory", "bg-cute-silver"];
 
 export default function CariTeman() {
+  const router = useRouter();
   // undefined = belum dicek (hindari hydration mismatch); null = tamu; obj = login.
   const [user, setUser] = useState<CurrentUser | null | undefined>(undefined);
   const [tab, setTab] = useState<Tab>("teman");
@@ -161,11 +163,18 @@ export default function CariTeman() {
           Fitur menemukan & menavigasi ke teman butuh akun MyRSIy. Masuk dulu lewat aplikasi
           MyRSIy, lalu buka kembali Navigasi Indoor. Navigasi ke lokasi tetap bisa tanpa masuk.
         </p>
+        {/* Masuk — arahkan ke halaman login auth seam (ADR-017). */}
+        <button
+          onClick={() => router.push("/auth/login")}
+          className="mt-5 h-[46px] w-full max-w-[280px] rounded-2xl bg-sensational-green px-6 text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
+        >
+          Masuk / Daftar
+        </button>
         {/* ponytail: bypass sementara — Fase 2 masih di atas mock (lib/friends.ts),
             belum ada auth MyRSIy asli. Hapus tombol ini saat identitas real turun (ADR-017). */}
         <button
           onClick={() => setUser({ userId: "demo-user", handle: "kamu" })}
-          className="mt-5 h-[46px] rounded-2xl bg-sensational-green px-6 text-sm font-bold text-white transition active:scale-[0.98] active:bg-[#023d24]"
+          className="mt-3 h-[46px] w-full max-w-[280px] rounded-2xl border-[0.5px] border-cute-silver bg-white text-sm font-bold text-matte-graphite transition active:scale-[0.98] active:bg-refreshing-ivory"
         >
           Coba dulu sebagai demo
         </button>

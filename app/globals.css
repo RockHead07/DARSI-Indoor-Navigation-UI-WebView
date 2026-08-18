@@ -59,3 +59,30 @@ body {
     box-shadow: 0 0 0 12px rgba(147, 187, 36, 0);
   }
 }
+
+/* One-shot entrance: fade-rise with blur. transform+opacity only (translate3d),
+   one-shot so the filter never repaints a scrolling container. */
+.darsi-rise {
+  opacity: 0;
+  animation: darsi-rise 0.8s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes darsi-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .darsi-rise {
+    animation: none;
+    opacity: 1;
+  }
+}
