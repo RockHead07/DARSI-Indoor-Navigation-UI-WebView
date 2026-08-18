@@ -184,8 +184,13 @@ export default function CariTeman() {
 
   return (
     <div className="flex min-h-full flex-col bg-authentic-white font-sans">
+      {/* Sapaan identitas — pengganti "Tamu" begitu login (ADR-017). */}
+      <p className="px-4 pt-[18px] text-[11px] font-bold text-matte-graphite">
+        Halo, {user.name ?? user.handle}
+      </p>
+
       {/* Tabs */}
-      <div className="flex gap-2 px-4 pb-1 pt-[18px]">
+      <div className="flex gap-2 px-4 pb-1 pt-2">
         {(
           [
             ["teman", "Daftar Teman"],

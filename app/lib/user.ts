@@ -13,11 +13,13 @@
 //
 // Gating (ADR-017): navigasi = boleh tamu; Cari Teman = login-only.
 
-export type CurrentUser = { userId: string; handle: string };
+// `name` opsional — MyRSIy tidak wajib expose nama asli (PII, lihat catatan di atas).
+// Kalau absen, UI fallback ke handle untuk display.
+export type CurrentUser = { userId: string; handle: string; name?: string };
 
 declare global {
   interface Window {
-    __DARSI_USER__?: { userId: string; handle?: string } | null;
+    __DARSI_USER__?: { userId: string; handle?: string; name?: string } | null;
   }
 }
 
@@ -31,7 +33,7 @@ export function getCurrentUser(): CurrentUser | null {
   // Host sudah menyetel (termasuk null = tamu eksplisit) → hormati.
   if ("__DARSI_USER__" in window) {
     const u = window.__DARSI_USER__;
-    return u?.userId ? { userId: u.userId, handle: u.handle ?? u.userId } : null;
+    return u?.userId ? { userId: u.userId, handle: u.handle ?? u.userId, name: u.name } : null;
   }
 
   // Tanpa host: dev = fake login (testable), produksi = tamu.
