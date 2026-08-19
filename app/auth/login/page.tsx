@@ -71,7 +71,7 @@ export default function LoginPage() {
     >
       <Reveal delay={120}>
         <div className="rounded-[2rem] p-1.5 ring-1 ring-black/[0.03] bg-cute-silver/60 shadow-[0_30px_60px_-45px_rgba(3,80,48,0.5)]">
-          <div className="rounded-[calc(2rem-0.375rem)] bg-white px-5 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+          <div className="rounded-[calc(2rem-0.375rem)] bg-white px-5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
             <div className="space-y-2">
               <Field
                 label="Email atau username"
@@ -122,7 +122,7 @@ export default function LoginPage() {
       </Reveal>
 
       <Reveal delay={200}>
-        <p className="mt-6 text-center text-[12px] text-matte-graphite">
+        <p className="mt-2 text-center text-[12px] text-matte-graphite">
           Belum punya akun?{" "}
           <button
             type="button"

@@ -90,7 +90,7 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-[100dvh] flex-col bg-authentic-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 font-sans text-space-black">
+    <div className="relative flex min-h-full flex-col bg-authentic-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 font-sans text-space-black">
       {/* Ambient glow — fixed background layer, pointer-events-none, static (no animation). */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-beryl-green/60 blur-3xl" />
@@ -112,10 +112,10 @@ export function AuthShell({
         </div>
       </Reveal>
 
-      <div className="mt-6 flex-1">{children}</div>
+      <div className="mt-3">{children}</div>
 
       <Reveal delay={120}>
-        <p className="mt-4 text-center text-[10px] leading-relaxed text-brushed-nickel">
+        <p className="mt-1 text-center text-[10px] leading-relaxed text-brushed-nickel">
           Dengan melanjutkan, kamu menyetujui Ketentuan Layanan &amp; Kebijakan Privasi DARSI.
         </p>
       </Reveal>
@@ -195,7 +195,7 @@ export function Field(props: FieldProps) {
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-full flex-1 bg-transparent text-[14px] text-space-black outline-none placeholder:text-[13px] placeholder:text-matte-graphite/70"
+        className="h-full min-w-0 flex-1 bg-transparent text-[14px] text-space-black outline-none placeholder:text-[13px] placeholder:text-matte-graphite/70"
       />
     </FieldBase>
   );
@@ -239,7 +239,7 @@ export function PasswordField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="h-full flex-1 bg-transparent text-[14px] text-space-black outline-none placeholder:text-[13px] placeholder:text-matte-graphite/70"
+        className="h-full min-w-0 flex-1 bg-transparent text-[14px] text-space-black outline-none placeholder:text-[13px] placeholder:text-matte-graphite/70"
       />
     </FieldBase>
   );
